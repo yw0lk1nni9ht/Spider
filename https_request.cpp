@@ -41,7 +41,28 @@ std::string https_request::GetRequest()
          ///需要改成用命令行获取网站的ca证书
          ///
          ///
-//         // This holds the root certificate used for verification
+         ///command:openssl s_client -connect www.nvshens.net:443 </home/ywin/ | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > remoteserver.pem
+         //获取当前路径
+         char buf[PATH_MAX];
+         getcwd(buf, PATH_MAX);
+         //拼接命令
+         std::string getPemFileCommand = "openssl s_client -connect ";
+         getPemFileCommand.append(host);
+         getPemFileCommand.append(":");
+         getPemFileCommand.append(port);
+         getPemFileCommand.append(" <");
+         getPemFileCommand.append(buf);
+         getPemFileCommand.append(" | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > ");
+         getPemFileCommand.append(host);
+         getPemFileCommand.append(".pem");
+         FILE *wget;
+         char ok_code[] = "ok";
+         //char wget_content[1024];
+         //wget=popen("openssl s_client -connect www.nvshens.net:443 </home/ywin/ | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > remoteserver.pem","r");
+         wget = popen(getPemFileCommand.c_str(),"r");
+         pclose(wget);
+
+         //         // This holds the root certificate used for verification
 //         std::string const cert ="-----BEGIN CERTIFICATE-----\n"
 //                 "MIIFpzCCBI+gAwIBAgIQBGFzIoKLSce1CVmlIQdj8TANBgkqhkiG9w0BAQsFADBy\n"
 //                 "MQswCQYDVQQGEwJDTjElMCMGA1UEChMcVHJ1c3RBc2lhIFRlY2hub2xvZ2llcywg\n"
