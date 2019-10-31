@@ -20,6 +20,6 @@ int main()
 
     //http_request test2;
     https_request test2;
-    test2.GetRequest();
+    test2.GetRequest("www.nvshens.net","/");
 
 }
