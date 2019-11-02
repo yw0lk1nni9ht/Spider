@@ -20,6 +20,9 @@ int main()
 
     //http_request test2;
     https_request test2;
-    test2.GetRequest("www.nvshens.net","/");
+    boost::beast::http::response<boost::beast::http::string_body> response =  test2.GetRequest("www.nvshens.net","/") ;
+
+    std::cout << response.body() << std::endl;
+
 
 }

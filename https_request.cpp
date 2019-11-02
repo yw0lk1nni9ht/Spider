@@ -28,7 +28,7 @@ https_request::https_request()
 
 }
 
-boost::beast::http::response<boost::beast::http::dynamic_body> https_request::GetRequest(char* _host,char* _target)
+boost::beast::http::response<boost::beast::http::string_body> https_request::GetRequest(char* _host,char* _target)
 {
     try
     {
@@ -147,15 +147,15 @@ boost::beast::http::response<boost::beast::http::dynamic_body> https_request::Ge
         beast::flat_buffer buffer;
 
         // Declare a container to hold the response
-        http::response<http::dynamic_body> res;
+        http::response<http::string_body> res;
 
         // Receive the HTTP response
         http::read(stream, buffer, res);
 
         // Write the message to standard out
         std::cout << res << std::endl;
-
         // Gracefully close the stream
+        //beast::get_lowest_layer(stream).close();
         beast::error_code ec2;
         stream.shutdown(ec2);
         if(ec2 == net::error::eof)
@@ -165,7 +165,11 @@ boost::beast::http::response<boost::beast::http::dynamic_body> https_request::Ge
             ec2 = {};
         }
         if(ec2)
+        {
+
+            return res;
             throw beast::system_error{ec2};
+        }
         // If we get here then the connection is closed gracefully
         return res;
     }
