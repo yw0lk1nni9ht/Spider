@@ -1,0 +1,10 @@
+prefix=/home/yw0lk1nni9ht/projects/FrameworkCompilation/htmlparser/htmlparser/Modest-master/build/
+exec_prefix=/home/yw0lk1nni9ht/projects/FrameworkCompilation/htmlparser/htmlparser/Modest-master/build/
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: modest
+Description: fast HTML renderer library with no outside dependency
+Version: 0.0.6
+Cflags: -I${includedir}/myhtml -I${includedir}/mycss -I${includedir}/myencoding -I${includedir}/myurl -I${includedir}/myunicode -I${includedir}/modest -I${includedir}/mycore -I${includedir}/myfont
+Libs: -L${libdir} -lmodest -lm
