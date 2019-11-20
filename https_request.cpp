@@ -153,7 +153,7 @@ boost::beast::http::response<boost::beast::http::string_body> https_request::Get
         http::read(stream, buffer, res);
 
         // Write the message to standard out
-        std::cout << res << std::endl;
+        //std::cout << res << std::endl;
         // Gracefully close the stream
         beast::get_lowest_layer(stream).close();
         beast::error_code ec2;

@@ -6,7 +6,9 @@ CONFIG -= qt
 SOURCES += \
         main.cpp \
     http_request.cpp \
-    https_request.cpp
+    https_request.cpp \
+    response_parse.cpp \
+
 
 #DEFINES +=BOOST_USE_LIB
 
@@ -18,7 +20,7 @@ SOURCES += \
 INCLUDEPATH += /usr/local/boost/include
 INCLUDEPATH += /usr/local/ssl/openssl/include
 INCLUDEPATH += include
-INCLUDEPATH += lib
+INCLUDEPATH += $$PWD/lib
 #LIBS += -L/usr/local/boost/lib -lboost_wave
 #LIBS += -L/usr/local/boost/lib -lboost_log
 #LIBS += -L/usr/local/boost/lib -lboost_graph
@@ -73,7 +75,8 @@ INCLUDEPATH += lib
 LIBS += -lpthread
 LIBS += -L/usr/local/ssl/openssl/lib -lssl
 LIBS += -L/usr/local/ssl/openssl/lib -lcrypto
-LIBS += -lmodest
+LIBS += -L$$PWD/lib -lmodest
 HEADERS += \
     http_request.h \
-    https_request.h
+    https_request.h \
+    response_parse.h \
