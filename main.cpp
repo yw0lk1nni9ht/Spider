@@ -9,11 +9,17 @@
 #include "http_request.h"
 #include "https_request.h"
 #include <response_parse.h>
+#include "pthread.h"
+#include<thread>
 
 using namespace std;
 //using namespace boost;
 
-
+void _test(std::string temp)
+{
+    response_parse test;
+    test.parse(temp);
+}
 int main()
 {
     //string command_rd = "ifconfig";
@@ -25,7 +31,10 @@ int main()
     //std::cout << response.body() << std::endl;
 
     std::cout << "进入html_parse测试" << std::endl;
-    response_parse test;
-    test.parse(a);
+
+    std::thread t(_test, a);
+    t.join();
+    //response_parse test;
+    //test.parse(a);
 
 }
