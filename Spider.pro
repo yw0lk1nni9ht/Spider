@@ -8,6 +8,7 @@ SOURCES += \
     http_request.cpp \
     https_request.cpp \
     response_parse.cpp \
+    downloadhandle.cpp
 
 
 #DEFINES +=BOOST_USE_LIB
@@ -80,3 +81,4 @@ HEADERS += \
     http_request.h \
     https_request.h \
     response_parse.h \
+    downloadhandle.h

@@ -10,6 +10,7 @@
 mystatus_t serialization_callback(const char* data, size_t len, void* ctx);
 mystatus_t serialization_callback2(const char* data, size_t len, void* ctx);
 void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection);
+std::string GetTagValue(const char* _attributeName);
 std::string Tag = "";
 myhtml_tag_id_t _tag_id = MyHTML_TAG__UNDEF;
 response_parse::response_parse()
@@ -51,23 +52,25 @@ mystatus_t serialization_callback2(const char* data, size_t len, void* ctx)
     if(temp.compare(">") == 0)
     {
         // Get URL
+        // example::  <a href="/girl/17886/" target="_blank">
         if (_tag_id == MyHTML_TAG_A)
         {
-            //std::cout << Tag.find("href=\"") << std::endl;
-            //std::cout << Tag.find("\">") << std::endl;
-            std::cout << Tag.substr(Tag.find("href=\"") + 6 ,Tag.find("\">") - (Tag.find("href=\"")) - 6) << std::endl;
+            std::cout << GetTagValue("href=\"") << std::endl;
         }
+
         //Get IMG url
+        //example::  <img src="img/grey.gif" data-original="img/example.jpg" width="640" heigh="480">
         if (_tag_id == MyHTML_TAG_IMG)
         {
             //if exist "data-original" then get it, if not : get "src"
-            //<img src="img/grey.gif" data-original="img/example.jpg" width="640" heigh="480">
-            if (Tag.find("data-original=\"") != std::string::npos)
+            std::string ret = GetTagValue("data-original=\"");
+            if (ret == "")
             {
-                //std::cout << Tag.substr(Tag.find("data-original=\"") + 6 ,Tag.find("\">") - (Tag.find("href=\"")) - 6) << std::endl;
+                ret = GetTagValue("src=\"");
             }
+            std::cout << ret << std::endl;
         }
-        std::cout << Tag << std::endl;
+        std::cout << Tag << std::endl << std::endl;
         Tag = "";
     }
 
@@ -89,4 +92,15 @@ void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_co
     else {
         printf("%s: empty\n", caption);
     }
+}
+
+std::string GetTagValue(const char* _attributeName)
+{
+    if (Tag.find(_attributeName) != std::string::npos)
+    {
+        std::string temp = Tag.substr(Tag.find(_attributeName) + strlen(_attributeName));
+        return temp.substr(0,temp.find("\""));
+    }
+    else
+        return "";
 }
