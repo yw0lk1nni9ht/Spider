@@ -20,7 +20,7 @@ response_parse::response_parse()
 
 void response_parse::parse(std::string response)
 {
-    _tag_id = MyHTML_TAG_IMG;
+    _tag_id = MyHTML_TAG_A;
 
     // basic init
     myhtml_t* myhtml = myhtml_create();

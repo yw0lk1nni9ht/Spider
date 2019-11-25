@@ -28,14 +28,13 @@ https_request::https_request()
 
 }
 
-boost::beast::http::response<boost::beast::http::string_body> https_request::GetRequest(char* _host,char* _target)
+std::string https_request::GetRequest(char* _host,char* _target)
 {
     try
     {
         //auto const host = "www.nvshens.net";
         auto host = _host;
         auto const port = "443";
-        //auto const target = "/";
         auto target = _target;
         int version = 11;
 
@@ -83,7 +82,7 @@ boost::beast::http::response<boost::beast::http::string_body> https_request::Get
         //                 "GDAWgBR/05nzoEcOMQBWViKOt8ye3coBijAdBgNVHQ4EFgQUYnD9OiCMwf6kXsbV\n"
         //                 "Hos/Be0ALqcwJwYDVR0RBCAwHoILbnZzaGVucy5uZXSCD3d3dy5udnNoZW5zLm5l\n"
         //                 "dDAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMC\n"
-        //                 "MEwGA1UdIARFMEMwNwYJYIZIAYb9bAECMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8v\n"
+        //                 "MEwGA1UdIARFMEMwNwYJYIZIAiocYb9bAECMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8v\n"
         //                 "d3d3LmRpZ2ljZXJ0LmNvbS9DUFMwCAYGZ4EMAQIBMIGSBggrBgEFBQcBAQSBhTCB\n"
         //                 "gjA0BggrBgEFBQcwAYYoaHR0cDovL3N0YXR1c2UuZGlnaXRhbGNlcnR2YWxpZGF0\n"
         //                 "aW9uLmNvbTBKBggrBgEFBQcwAoY+aHR0cDovL2NhY2VydHMuZGlnaXRhbGNlcnR2\n"
@@ -95,7 +94,7 @@ boost::beast::http::response<boost::beast::http::string_body> https_request::Get
         //                 "MEUCIErRyFF3A3XzgBzVQ7ndo0GRXOLiHMntuREgrzIAaa1sAiEAr1Y4fx3PV4jx\n"
         //                 "7A2z9wxi3XPJneGB3uRLboodtlUuIQowDQYJKoZIhvcNAQELBQADggEBAFviw0xU\n"
         //                 "ZvOAFdd8dauNp6Ezta0S8gN+5l56zbAybTvAR9oJdn3RP9zXmhdPKzdQfrEyrSnZ\n"
-        //                 "jH6auvN6NdlLWsbKTDubclbvlYChB2QiTzWn/D9DB+GrCaoJcEJQv/iy047ix3R+\n"
+        //                 "jH6auvN6NdlLWsbKTDubclbvliocYChB2QiTzWn/D9DB+GrCaoJcEJQv/iy047ix3R+\n"
         //                 "taaO2CLUcH+dJZaBhANRxTVFxcTG9vwoOVhb7WVnPsLRXkEBzUcwroPSVItVTWk+\n"
         //                 "TySazAZdFEM2WVxaUl+TXRtz8K7G2Oq9aepeJ4kcGs0+Qe9DVkIZwiAROWlXtro4\n"
         //                 "DEz7U7+lyNJsvH0kIufH7luARValF/nQB4ptm8ovksbWWmWwXEj9QNh3mHahEZO3\n"
@@ -153,7 +152,7 @@ boost::beast::http::response<boost::beast::http::string_body> https_request::Get
         http::read(stream, buffer, res);
 
         // Write the message to standard out
-        //std::cout << res << std::endl;
+        std::cout << res << std::endl;
         // Gracefully close the stream
         beast::get_lowest_layer(stream).close();
         beast::error_code ec2;
@@ -167,11 +166,11 @@ boost::beast::http::response<boost::beast::http::string_body> https_request::Get
         if(ec2)
         {
 
-            return res;
+            return res.body();
             throw beast::system_error{ec2};
         }
         // If we get here then the connection is closed gracefully
-        return res;
+        return res.body();
     }
     catch(std::exception const& e)
     {

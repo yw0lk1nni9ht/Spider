@@ -6,7 +6,7 @@ class https_request
 {
 public:
     https_request();
-    boost::beast::http::response<boost::beast::http::string_body> GetRequest(char* _host,char* _target);
+    std::string GetRequest(char* _host,char* _target);
 };
 
 #endif // HTTPS_REQUEST_H
