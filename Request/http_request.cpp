@@ -21,7 +21,15 @@ namespace net = boost::asio;        // from <boost/asio.hpp>
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
 http_request::http_request()
 {
-
+}
+http_request::~http_request()
+{
+    if(stream!= NULL)
+    {
+        //delete (beast::tcp_stream *)stream;
+        delete stream;
+        stream = NULL;
+    }
 }
 
 std::string http_request::GetRequest()
@@ -43,8 +51,7 @@ std::string http_request::GetRequest()
         // ... read and write as normal ...
         // Look up the domain name
         auto const results = resolver.resolve(host, port);
-        std::cout << results.size() << std::endl;
-        std::cout << results.empty() << std::endl;
+
         // Make the connection on the IP address we get from a lookup
         stream.connect(results);
 
@@ -53,7 +60,7 @@ std::string http_request::GetRequest()
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
-        std::cout << req << std::endl;
+        //std::cout << req << std::endl;
         // Send the HTTP request to the remote host
         http::write(stream, req);
 
@@ -96,19 +103,21 @@ bool http_request::TryToConnect(std::string url)
         host = url;
         auto const port = "80";
         target = "\"";
+
         // The io_context is required for all I/O
         net::io_context ioc;
 
         // These objects perform our I/O
         tcp::resolver resolver(ioc);
-        beast::tcp_stream _stream(ioc);
+        //beast::tcp_stream stream(ioc);
+        //_stream = (void*)&stream;
+        stream = new beast::tcp_stream(ioc);
 
         // Look up the domain name
         auto const results = resolver.resolve(host, port);
         // Make the connection on the IP address we get from a lookup
         beast::error_code ec;
-        _stream.connect(results,ec);
-        stream = &_stream;
+        ((beast::tcp_stream*)stream)->connect(results,ec);
         if (ec.failed())
         {
             return false;
@@ -124,29 +133,48 @@ bool http_request::TryToConnect(std::string url)
 
 std::string http_request::GetRetData()
 {
-    // Set up an HTTP GET request message
-    http::request<http::string_body> req{http::verb::get, target, version};
-    req.set(http::field::host, host);
-    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    try
+    {
+        if (stream == NULL)
+        {
+            throw "stream is NULL";
+        }
+        // Set up an HTTP GET request message
+        http::request<http::string_body> req{http::verb::get, target, version};
+        req.set(http::field::host, host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
-    std::cout << req << std::endl;
-    // Send the HTTP request to the remote host
-    http::write(stream, req);
+        std::cout << req << std::endl;
+        // Send the HTTP request to the remote host
+        http::write(*((beast::tcp_stream*)stream), req);
 
-    // This buffer is used for reading and must be persisted
-    beast::flat_buffer buffer;
+        // This buffer is used for reading and must be writepersisted
+        beast::flat_buffer buffer;
 
-    // Declare a container to hold the response
-    http::response<http::dynamic_body> res;
+//        http::response_parser<http::string_body> p;
+//        p.skip(true);
+//        http::read(*((beast::tcp_stream*)stream), buffer, p);
+//        std::cout << p.get() << std::endl;
 
-    // Receive the HTTP response
-    http::read(stream, buffer, res);
+        // Declare a container to hold the response
+        http::response<http::string_body> res;
 
-    // Write the message to standard out
-    std::cout << res << std::endl;
+        // Receive the HTTP responsewrite
+        http::read(*((beast::tcp_stream*)stream), buffer, res);
 
-    // Gracefully close the socket
-    beast::error_code ec;
-    stream.socket().shutdown(tcp::socket::shutdown_both, ec);
-    return res.body();
+        res.header_type;
+
+        // Write the message to standard out
+        std::cout << res << std::endl;
+
+        // Gracefully close the socket
+        beast::error_code ec;
+        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_both, ec);
+        return "";
+    }
+    catch (std::exception e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return "";
+    }
 }

@@ -9,8 +9,6 @@ public:
     RequestHandle();
     int Connect(std::string url);
     std::string GetRetMessage(int retnum);
-    std::string GetRetData();
-
 };
 //#endif // REQUESTHANDLE_H
 

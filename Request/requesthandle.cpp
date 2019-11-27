@@ -1,5 +1,6 @@
 #include "requesthandle.h"
 #include "http_request.h"
+#include "https_request.h"
 
 enum ReturnNum {
     SUCCESS                 = 0x000,
@@ -27,13 +28,18 @@ int RequestHandle::Connect(std::string url)
 {
     //判断URL是否可以连通
     http_request testhttp;
+    https_request testhttps;
     if(!testhttp.TryToConnect(url))
     {
-        return URL_ERROR;
+        //http不通则使用https尝试连通
+        //if (!testhttps.TryToConnect(url))
+        //{
+            return URL_ERROR;
+        //}
     }
 
     //获取返回值
-
+    std::cout << testhttp.GetRetData() << std::endl;
     //判断url合法
     return SUCCESS;
 }
