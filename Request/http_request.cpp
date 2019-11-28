@@ -102,7 +102,7 @@ bool http_request::TryToConnect(std::string url)
     {
         host = url;
         auto const port = "80";
-        target = "\"";
+        target = "/";
 
         // The io_context is required for all I/O
         net::io_context ioc;
@@ -131,7 +131,7 @@ bool http_request::TryToConnect(std::string url)
     }
 }
 
-std::string http_request::GetRetData()
+int http_request::GetRetData()
 {
     try
     {
@@ -143,18 +143,13 @@ std::string http_request::GetRetData()
         http::request<http::string_body> req{http::verb::get, target, version};
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        //std::cout << req << std::endl;
 
-        std::cout << req << std::endl;
         // Send the HTTP request to the remote host
         http::write(*((beast::tcp_stream*)stream), req);
 
         // This buffer is used for reading and must be writepersisted
         beast::flat_buffer buffer;
-
-//        http::response_parser<http::string_body> p;
-//        p.skip(true);
-//        http::read(*((beast::tcp_stream*)stream), buffer, p);
-//        std::cout << p.get() << std::endl;
 
         // Declare a container to hold the response
         http::response<http::string_body> res;
@@ -162,19 +157,33 @@ std::string http_request::GetRetData()
         // Receive the HTTP responsewrite
         http::read(*((beast::tcp_stream*)stream), buffer, res);
 
-        res.header_type;
-
         // Write the message to standard out
         std::cout << res << std::endl;
-
+        //std::cout << (int)(((http::response_header<>)res.base()).result()) << std::endl;
+        if (((http::response_header<>)res.base()).result() == http::status::moved_permanently ||
+                ((http::response_header<>)res.base()).result() == http::status::found)
+        {
+            //_moveurl = ((http::response_header<>)res.base()).reason();
+            std::cout << res[http::field::location] << std::endl;
+        }
         // Gracefully close the socket
         beast::error_code ec;
-        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_both, ec);
-        return "";
+        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
+        if (ec)
+        {
+            std::cout << "An error occurred in shutdown socket." << std::endl;
+        }
+        return (int)((http::response_header<>)res.base()).result();
+        //return res.body();
     }
     catch (std::exception e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        return "";
+        return (int)http::status::unknown;
     }
+}
+
+std::string http_request::GetMoveUrl()
+{
+    return _moveurl;
 }

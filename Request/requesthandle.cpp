@@ -29,17 +29,29 @@ int RequestHandle::Connect(std::string url)
     //判断URL是否可以连通
     http_request testhttp;
     https_request testhttps;
-    if(!testhttp.TryToConnect(url))
+    bool http_connect = testhttp.TryToConnect(url);
+    if(http_connect)
     {
-        //http不通则使用https尝试连通
-        //if (!testhttps.TryToConnect(url))
-        //{
+        int ret = testhttp.GetRetData();
+        //获取返回值 ，重定向
+        if (ret == (int)boost::beast::http::status::moved_permanently || ret == (int)boost::beast::http::status::found)
+        {
+            std::cout << testhttp.GetMoveUrl() << std::endl;
+        }
+        else if((ret >= (int)boost::beast::http::status::bad_request
+                && ret <= (int)boost::beast::http::status::network_connect_timeout_error)
+                || ret == (int)boost::beast::http::status::unknown)
+        {
+            //错误状态码 300-599 或 异常状态 status::unknown
             return URL_ERROR;
-        //}
+        }
+    }
+    else
+    {
+        return URL_ERROR;
     }
 
-    //获取返回值
-    std::cout << testhttp.GetRetData() << std::endl;
+    //boost::beast::http::status
     //判断url合法
     return SUCCESS;
 }

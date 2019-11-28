@@ -12,13 +12,14 @@ public:
     ~http_request();
     std::string GetRequest();
     bool TryToConnect(std::string url);
-    std::string GetRetData();
+    int GetRetData();
+    std::string GetMoveUrl();
 private:
     std::string host;
-    std::string target = "";
+    std::string target = "/";
     int const version = 11;
-    //boost::beast::tcp_stream *stream = NULL;
     void * stream = NULL;
+    std::string _moveurl = "";
 };
 
 #endif // HTTP_REQUEST_H
