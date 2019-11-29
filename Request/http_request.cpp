@@ -32,7 +32,14 @@ http_request::~http_request()
     }
 }
 
-std::string http_request::GetRequest()
+/**
+ * @brief http请求测试函数
+ *
+ * @return 返回说明
+ *     -<em>string</em> fail
+ *     -<em>string</em> succeed
+ */
+std::string http_request::GetRequestTest()
 {
     try
     {
@@ -96,26 +103,39 @@ std::string http_request::GetRequest()
     return "success";
 }
 
-bool http_request::TryToConnect(std::string url)
+
+
+/**
+ * @brief 测试url是否有效，初始化成员stream
+ * @param url       传入的url
+ *
+ * @return 返回说明
+ *     -<em>false</em>  url无效
+ *     -<em>true</em>   url有效
+ */
+bool http_request::TryToConnect(std::string url,std::string _target)
 {
     try
     {
         host = url;
         auto const port = "80";
-        target = "/";
+        target = _target;
 
-        // The io_context is required for all I/O
+        // IO上下文
         net::io_context ioc;
 
-        // These objects perform our I/O
+        // TCP分解器
         tcp::resolver resolver(ioc);
-        //beast::tcp_stream stream(ioc);
-        //_stream = (void*)&stream;
-        stream = new beast::tcp_stream(ioc);
 
-        // Look up the domain name
+        //创建TCP流式结构
+        if (stream == NULL)
+        {
+            stream = new beast::tcp_stream(ioc);
+        }
+
+        // 找到endpoint
         auto const results = resolver.resolve(host, port);
-        // Make the connection on the IP address we get from a lookup
+        // 通过我们找到的endpoint，与之建立socket连接
         beast::error_code ec;
         ((beast::tcp_stream*)stream)->connect(results,ec);
         if (ec.failed())
@@ -131,50 +151,60 @@ bool http_request::TryToConnect(std::string url)
     }
 }
 
-int http_request::GetRetData()
+
+
+/**
+ * @brief 获取HTTP响应码,若为302，则记录重定向的url；记录body
+ *
+ * @return 返回说明
+ *     -<em>int</em> http响应状态值
+ */
+int http_request::GetResponseStatus()
 {
     try
     {
         if (stream == NULL)
         {
-            throw "stream is NULL";
+            throw "error:stream is NULL";
         }
-        // Set up an HTTP GET request message
+        // 设置HTTP请求
         http::request<http::string_body> req{http::verb::get, target, version};
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
         //std::cout << req << std::endl;
 
-        // Send the HTTP request to the remote host
+        // 发送HTTP请求到远程主机
         http::write(*((beast::tcp_stream*)stream), req);
 
-        // This buffer is used for reading and must be writepersisted
+        // 创建buffer用于读取和写入持久化
         beast::flat_buffer buffer;
 
-        // Declare a container to hold the response
+        // 声明一个容器用于保存响应
         http::response<http::string_body> res;
 
-        // Receive the HTTP responsewrite
+        // 接受HTTP响应并写入
         http::read(*((beast::tcp_stream*)stream), buffer, res);
 
-        // Write the message to standard out
-        std::cout << res << std::endl;
-        //std::cout << (int)(((http::response_header<>)res.base()).result()) << std::endl;
+        // 输出显示
+        //std::cout << res << std::endl;
+        _body = res.body();
+
+        // 如果响应状态为302 301则记录下重定向的url
         if (((http::response_header<>)res.base()).result() == http::status::moved_permanently ||
                 ((http::response_header<>)res.base()).result() == http::status::found)
         {
-            //_moveurl = ((http::response_header<>)res.base()).reason();
-            std::cout << res[http::field::location] << std::endl;
+            _moveurl = std::string((res.at(http::field::location)).data());
         }
-        // Gracefully close the socket
+
+        // 关闭stream的Socket连接
         beast::error_code ec;
         ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
         if (ec)
         {
             std::cout << "An error occurred in shutdown socket." << std::endl;
         }
-        return (int)((http::response_header<>)res.base()).result();
-        //return res.body();
+        //return (int)((http::response_header<>)res.base()).result();
+        return (int)res.base().result();
     }
     catch (std::exception e)
     {
@@ -183,7 +213,16 @@ int http_request::GetRetData()
     }
 }
 
+
+
 std::string http_request::GetMoveUrl()
 {
     return _moveurl;
+}
+
+
+
+std::string http_request::GetBodyData()
+{
+    return _body;
 }

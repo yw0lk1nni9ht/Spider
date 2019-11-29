@@ -6,7 +6,7 @@ class https_request
 {
 public:
     https_request();
-    std::string GetRequest(char* _host,char* _target);
+    std::string GetRequestTest(std::string _host,std::string _target);
 };
 
 #endif // HTTPS_REQUEST_H

@@ -6,13 +6,17 @@
 */
 
 #include "https_request.h"
-#include <iostream>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+//md5
+#include <fstream>
+#include <openssl/md5.h>
+//other
+#include <iostream>
 #include <cstdlib>
 #include <string>
 
@@ -22,13 +26,23 @@ namespace net = boost::asio;        // from <boost/asio.hpp>
 namespace ssl = net::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
+int get_file_md5(const std::string &file_name, std::string &md5_value);
 
 https_request::https_request()
 {
 
 }
 
-std::string https_request::GetRequest(char* _host,char* _target)
+/**
+ * @brief https请求测试函数
+ * @param _host     域名、主机名
+ * @param _target   目标路径
+ *
+ * @return 返回说明
+ *     -<em>false</em> fail
+ *     -<em>true</em> succeed
+ */
+std::string https_request::GetRequestTest(std::string _host,std::string _target)
 {
     try
     {
@@ -38,9 +52,9 @@ std::string https_request::GetRequest(char* _host,char* _target)
         auto target = _target;
         int version = 11;
 
-        // The io_context is required for all I/O
+        // IO上下文
         net::io_context ioc;
-        // The SSL context is required, and holds certificates
+        // SSL上下文是必需的，并保存证书
         ssl::context ctx(ssl::context::sslv23);
 
 
@@ -107,53 +121,52 @@ std::string https_request::GetRequest(char* _host,char* _target)
 
         std::string targetPem = host;
         targetPem.append(".pem");
-        //ctx.load_verify_file("nvshens_net.pem");
         ctx.load_verify_file((targetPem));
 
-        // Verify the remote server's certificate
+        // 验证远程服务器的证书
         ctx.set_verify_mode(ssl::verify_none);
 
-        // These objects perform our I/O
+        // TCP分解器
         tcp::resolver resolver(ioc);
+        //创建TCP流式结构
         beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
 
-        // Set SNI Hostname (many hosts need this to handshake successfully)
-        if(! SSL_set_tlsext_host_name(stream.native_handle(), host))
+        // 设置SNI主机名（许多主机需要此项才能成功握手）
+        if(! SSL_set_tlsext_host_name(stream.native_handle(), (char*)host.c_str()))
         {
             beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
             throw beast::system_error{ec};
         }
 
-        // Look up the domain name
+        // 找到域名
         auto const results = resolver.resolve(host, port);
-
-        // Make the connection on the IP address we get from a lookup
+        // 连接
         beast::get_lowest_layer(stream).connect(results);
 
-        // Perform the SSL handshake
-
+        // 执行SSL握手
         stream.handshake(ssl::stream_base::client);
 
-        // Set up an HTTP GET request message
+        // 设置HTTP请求
         http::request<http::string_body> req{http::verb::get, target, version};
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
-        // Send the HTTP request to the remote host
+        // 发送HTTP请求到远程主机
         http::write(stream, req);
 
-        // This buffer is used for reading and must be persisted
+        // 创建buffer用于读取和写入持久化
         beast::flat_buffer buffer;
 
-        // Declare a container to hold the response
+        // 声明一个容器用于保存响应
         http::response<http::string_body> res;
 
-        // Receive the HTTP response
+        // 接受HTTP响应
         http::read(stream, buffer, res);
 
-        // Write the message to standard out
+        // 输出显示
         std::cout << res << std::endl;
-        // Gracefully close the stream
+
+        // 关闭连接
         beast::get_lowest_layer(stream).close();
         beast::error_code ec2;
         stream.shutdown(ec2);
@@ -179,3 +192,92 @@ std::string https_request::GetRequest(char* _host,char* _target)
     }
     //return "success";
 }
+
+/**
+ * @brief 下载网站CA证书
+ *
+ * @return 返回说明
+ *     -<em>void</em> void
+ */
+void https_request::GetSSLFile()
+{
+    string file_name = host + ".pem";
+    string md5value;
+    int ret = get_file_md5(file_name, md5value);
+    if (ret < 0)
+    {
+        printf("get file md5 failed. file=%s\n", file_name.c_str());
+        return -1;
+    }
+    printf("the md5value=%s\n", md5value.c_str());
+
+
+    /// 用命令行获取网站的ca证书
+    /// command:openssl s_client -connect www.nvshens.net:443 </home/ywin  | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > remoteserver.pem
+    //获取当前路径
+    char buf[PATH_MAX];
+    getcwd(buf, PATH_MAX);
+    //拼接命令
+    std::string getPemFileCommand = "openssl s_client -connect ";
+    getPemFileCommand.append(host);
+    getPemFileCommand.append(":");
+    getPemFileCommand.append(port);
+    getPemFileCommand.append(" <");
+    getPemFileCommand.append(buf);
+    getPemFileCommand.append(" | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > ");
+    getPemFileCommand.append(host);
+    getPemFileCommand.append(".pem");
+    FILE *wget;
+    char ok_code[] = "ok";
+    //char wget_content[1024];
+    //wget=popen("openssl s_client -connect www.nvshens.net:443 </home/ywin/ | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > remoteserver.pem","r");
+    wget = popen(getPemFileCommand.c_str(),"r");
+    pclose(wget);
+
+}
+
+
+/**
+ * @brief 获取文件的md5
+ * @param index    参数1
+ *
+ * @return 返回说明
+ *     -<em>false</em> fail
+ *     -<em>true</em> succeed
+ */
+int get_file_md5(const std::string &file_name, std::string &md5_value)
+{
+    md5_value.clear();
+
+    std::ifstream file(file_name.c_str(), std::ifstream::binary);
+    if (!file)
+    {
+        return -1;
+    }
+
+    MD5_CTX md5Context;
+    MD5_Init(&md5Context);
+
+    char buf[1024 * 16];
+    while (file.good()) {
+        file.read(buf, sizeof(buf));
+        MD5_Update(&md5Context, buf, file.gcount());
+    }
+
+    unsigned char result[MD5_DIGEST_LENGTH];
+    MD5_Final(result, &md5Context);
+
+    char hex[35];
+    memset(hex, 0, sizeof(hex));
+    for (int i = 0; i < MD5_DIGEST_LENGTH; ++i)
+    {
+        sprintf(hex + i * 2, "%02x", result[i]);
+    }
+    hex[32] = '\0';
+    md5_value = string(hex);
+
+    return 0;
+}
+
+
+
