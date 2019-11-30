@@ -6,12 +6,14 @@ CONFIG -= qt
 HEADERS += \
     Request/http_request.h \
     Request/https_request.h \
+    Request/request.h \
     Request/requesthandle.h \
     response_parse.h \
     downloadhandle.h
 SOURCES += \
     Request/http_request.cpp \
     Request/https_request.cpp \
+	Request/request.cpp \
     Request/requesthandle.cpp \
         main.cpp \
     response_parse.cpp \

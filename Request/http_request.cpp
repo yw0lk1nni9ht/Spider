@@ -21,6 +21,7 @@ namespace net = boost::asio;        // from <boost/asio.hpp>
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
 http_request::http_request()
 {
+    port = "80";
 }
 http_request::~http_request()
 {
@@ -31,6 +32,7 @@ http_request::~http_request()
         stream = NULL;
     }
 }
+
 
 /**
  * @brief http请求测试函数
@@ -102,8 +104,6 @@ std::string http_request::GetRequestTest()
     }
     return "success";
 }
-
-
 
 /**
  * @brief 测试url是否有效，初始化成员stream

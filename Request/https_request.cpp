@@ -80,6 +80,7 @@ std::string https_request::GetRequestTest(std::string _host,std::string _target)
         wget = popen(getPemFileCommand.c_str(),"r");
         pclose(wget);
 
+        /* CA证书的字符串
         //         // This holds the root certificate used for verification
         //         std::string const cert ="-----BEGIN CERTIFICATE-----\n"
         //                 "MIIFpzCCBI+gAwIBAgIQBGFzIoKLSce1CVmlIQdj8TANBgkqhkiG9w0BAQsFADBy\n"
@@ -118,6 +119,7 @@ std::string https_request::GetRequestTest(std::string _host,std::string _target)
         //         boost::system::error_code ec;
         //         ctx.add_certificate_authority(
         //             boost::asio::buffer(cert.data(), cert.size()), ec);         //load_root_certificates(ctx);
+        */
 
         std::string targetPem = host;
         targetPem.append(".pem");
@@ -182,16 +184,44 @@ std::string https_request::GetRequestTest(std::string _host,std::string _target)
             return res.body();
             throw beast::system_error{ec2};
         }
-        // If we get here then the connection is closed gracefully
+
         return res.body();
     }
     catch(std::exception const& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        //return "faile";
     }
-    //return "success";
 }
+
+
+
+/**
+ * @brief 测试url是否有效，初始化成员stream
+ * @param url       传入的url
+ *
+ * @return 返回说明
+ *     -<em>false</em>  url无效
+ *     -<em>true</em>   url有效
+ */
+bool https_request::TryToConnect(std::string url,std::string _target)
+{
+    return true;
+}
+
+
+
+/**
+ * @brief 获取HTTP响应码,若为302，则记录重定向的url；记录body
+ *
+ * @return 返回说明
+ *     -<em>int</em> http响应状态值
+ */
+int https_request::GetResponseStatus()
+{
+    return 0;
+}
+
+
 
 /**
  * @brief 下载网站CA证书
@@ -201,13 +231,13 @@ std::string https_request::GetRequestTest(std::string _host,std::string _target)
  */
 void https_request::GetSSLFile()
 {
-    string file_name = host + ".pem";
-    string md5value;
+    std::string file_name = host + ".pem";
+    std::string md5value;
     int ret = get_file_md5(file_name, md5value);
     if (ret < 0)
     {
         printf("get file md5 failed. file=%s\n", file_name.c_str());
-        return -1;
+        //return -1;
     }
     printf("the md5value=%s\n", md5value.c_str());
 
@@ -235,6 +265,7 @@ void https_request::GetSSLFile()
     pclose(wget);
 
 }
+
 
 
 /**
@@ -274,7 +305,7 @@ int get_file_md5(const std::string &file_name, std::string &md5_value)
         sprintf(hex + i * 2, "%02x", result[i]);
     }
     hex[32] = '\0';
-    md5_value = string(hex);
+    md5_value = std::string(hex);
 
     return 0;
 }
