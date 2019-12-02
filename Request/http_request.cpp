@@ -143,12 +143,15 @@ bool http_request::TryToConnect(std::string url,std::string _target)
         ((beast::tcp_stream*)stream)->connect(results,ec);
         if (ec.failed())
         {
+            _status = (int)http::status::unknown;
             return false;
         }
+        _status = GetResponseStatus();
         return true;
     }
     catch(std::exception e)
     {
+        _status = (int)http::status::unknown;
         std::cerr << "Error: " << e.what() << std::endl;
         return false;
     }
@@ -196,7 +199,7 @@ int http_request::GetResponseStatus()
         if (((http::response_header<>)res.base()).result() == http::status::moved_permanently ||
                 ((http::response_header<>)res.base()).result() == http::status::found)
         {
-            _moveurl = std::string((res.at(http::field::location)).data());
+            _moveurl = std::string(res.at(http::field::location)).data();
         }
 
         // 关闭stream的Socket连接

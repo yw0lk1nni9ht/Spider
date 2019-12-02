@@ -11,6 +11,7 @@ public:
     ~http_request();
      std::string GetRequestTest() override;
      bool TryToConnect(std::string url,std::string _target) override;
+private :
      int GetResponseStatus() override;
 };
 

@@ -263,11 +263,12 @@ bool https_request::TryToConnect(std::string url,std::string _target)
 
     // 执行SSL握手
     ((beast::ssl_stream<beast::tcp_stream>*)stream)->handshake(ssl::stream_base::client);
-
+    _status = GetResponseStatus();
     return true;
     }
     catch(std::exception e)
     {
+        _status = GetResponseStatus();
         std::cerr << "Error: " << e.what() << std::endl;
         return false;
     }

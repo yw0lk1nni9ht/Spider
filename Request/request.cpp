@@ -8,17 +8,31 @@ BaseRequest::~BaseRequest(){
 }
 
 std::string BaseRequest::GetRequestTest(){}
+
+
+
 bool BaseRequest::TryToConnect(std::string url,std::string _target){}
+
+
+
 int BaseRequest::GetResponseStatus(){}
 
 
-std::string BaseRequest::GetMoveUrl()
+
+std::string BaseRequest::GetRes_MoveUrl()
 {
     return _moveurl;
 }
 
 
-std::string BaseRequest::GetBodyData()
+
+std::string BaseRequest::GetRes_BodyData()
 {
     return _body;
+}
+
+
+
+int BaseRequest::GetRes_Status(){
+    return _status;
 }
