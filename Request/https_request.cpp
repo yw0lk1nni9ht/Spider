@@ -19,6 +19,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include "stdio.h"
 
 namespace beast = boost::beast;     // from <boost/beast.hpp>
 namespace http = beast::http;       // from <boost/beast/http.hpp>
@@ -30,7 +31,17 @@ int get_file_md5(const std::string &file_name, std::string &md5_value);
 
 https_request::https_request()
 {
+    port = "443";
+}
 
+https_request::~https_request()
+{
+    if(stream!= NULL)
+    {
+        //delete (beast::tcp_stream *)stream;
+        delete stream;
+        stream = NULL;
+    }
 }
 
 /**
@@ -42,14 +53,15 @@ https_request::https_request()
  *     -<em>false</em> fail
  *     -<em>true</em> succeed
  */
-std::string https_request::GetRequestTest(std::string _host,std::string _target)
+std::string https_request::GetRequestTest()
 {
     try
     {
-        //auto const host = "www.nvshens.net";
-        auto host = _host;
+        auto const host = "www.nvshens.net";
+        //auto host = _host;
         auto const port = "443";
-        auto target = _target;
+        //auto target = _target;
+        auto target = "/";
         int version = 11;
 
         // IO上下文
@@ -63,7 +75,7 @@ std::string https_request::GetRequestTest(std::string _host,std::string _target)
         //获取当前路径
         char buf[PATH_MAX];
         getcwd(buf, PATH_MAX);
-        //拼接命令
+        //拼接命令https_request
         std::string getPemFileCommand = "openssl s_client -connect ";
         getPemFileCommand.append(host);
         getPemFileCommand.append(":");
@@ -134,7 +146,7 @@ std::string https_request::GetRequestTest(std::string _host,std::string _target)
         beast::ssl_stream<beast::tcp_stream> stream(ioc, ctx);
 
         // 设置SNI主机名（许多主机需要此项才能成功握手）
-        if(! SSL_set_tlsext_host_name(stream.native_handle(), (char*)host.c_str()))
+        if(! SSL_set_tlsext_host_name(stream.native_handle(), host))
         {
             beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
             throw beast::system_error{ec};
@@ -205,7 +217,60 @@ std::string https_request::GetRequestTest(std::string _host,std::string _target)
  */
 bool https_request::TryToConnect(std::string url,std::string _target)
 {
+    try
+    {
+    host = url;
+    target = _target;
+
+    if (!GetSSLFile())
+    {
+        //下载SSL证书失败，或者
+        return false;
+    }
+
+    // IO上下文
+    net::io_context ioc;
+    // SSL上下文是必需的，并保存证书
+    ssl::context ctx(ssl::context::sslv23);
+
+    //加载CA证书
+    std::string targetPem = host;
+    targetPem.append(".pem");
+    ctx.load_verify_file((targetPem));
+
+    // 选择验证远程服务器的证书的方式
+    ctx.set_verify_mode(ssl::verify_none);
+
+    // TCP分解器
+    tcp::resolver resolver(ioc);
+    //创建TCP流式结构
+    if (stream == NULL)
+    {
+        stream = new beast::ssl_stream<beast::tcp_stream>(ioc,ctx);
+    }
+
+    // 设置SNI主机名（许多主机需要此项才能成功握手）
+    if(! SSL_set_tlsext_host_name(((beast::ssl_stream<beast::tcp_stream>*)stream)->native_handle(), host.c_str()))
+    {
+        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+        throw beast::system_error{ec};
+    }
+
+    // 找到域名
+    auto const results = resolver.resolve(host, port);
+    // 连接
+    beast::get_lowest_layer(*((beast::ssl_stream<beast::tcp_stream>*)stream)).connect(results);
+
+    // 执行SSL握手
+    ((beast::ssl_stream<beast::tcp_stream>*)stream)->handshake(ssl::stream_base::client);
+
     return true;
+    }
+    catch(std::exception e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 
@@ -218,7 +283,62 @@ bool https_request::TryToConnect(std::string url,std::string _target)
  */
 int https_request::GetResponseStatus()
 {
-    return 0;
+    try
+    {
+        if (stream == NULL)
+        {
+            throw "error:stream is NULL";
+        }
+        // 设置HTTP请求
+        http::request<http::string_body> req{http::verb::get, target, version};
+        req.set(http::field::host, host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+        // 发送HTTP请求到远程主机
+        http::write(*(beast::ssl_stream<beast::tcp_stream>*)stream, req);
+
+        // 创建buffer用于读取和写入持久化
+        beast::flat_buffer buffer;
+
+        // 声明一个容器用于保存响应
+        http::response<http::string_body> res;
+
+        // 接受HTTP响应
+        http::read(*(beast::ssl_stream<beast::tcp_stream>*)stream, buffer, res);
+
+        // 输出显示
+        //std::cout << res << std::endl;
+        _body = res.body();
+
+        // 如果响应状态为302 301则记录下重定向的url
+        if (((http::response_header<>)res.base()).result() == http::status::moved_permanently ||
+                ((http::response_header<>)res.base()).result() == http::status::found)
+        {
+            _moveurl = std::string((res.at(http::field::location)).data());
+        }
+
+        // 关闭连接
+        beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
+        beast::error_code ec2;
+        ((beast::ssl_stream<beast::tcp_stream>*)stream)->shutdown(ec2);
+        if(ec2 == net::error::eof)
+        {
+            // Rationale:
+            // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+            ec2 = {};
+        }
+        if(ec2)
+        {
+            return (int)res.base().result();
+            throw beast::system_error{ec2};
+        }
+        return (int)res.base().result();
+    }
+    catch (std::exception e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return (int)http::status::unknown;
+    }
 }
 
 
@@ -229,18 +349,22 @@ int https_request::GetResponseStatus()
  * @return 返回说明
  *     -<em>void</em> void
  */
-void https_request::GetSSLFile()
+bool https_request::GetSSLFile()
 {
-    std::string file_name = host + ".pem";
-    std::string md5value;
-    int ret = get_file_md5(file_name, md5value);
-    if (ret < 0)
+    std::string filename = host + ".pem";
+    std::fstream _file;
+    _file.open(filename, std::ios::in);
+    if(_file)
     {
-        printf("get file md5 failed. file=%s\n", file_name.c_str());
-        //return -1;
+        //已经存在!
+        _file.close();
+        return true;
     }
-    printf("the md5value=%s\n", md5value.c_str());
-
+    else
+    {
+        //没有被创建!
+        _file.close();
+    }
 
     /// 用命令行获取网站的ca证书
     /// command:openssl s_client -connect www.nvshens.net:443 </home/ywin  | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > remoteserver.pem
@@ -264,6 +388,22 @@ void https_request::GetSSLFile()
     wget = popen(getPemFileCommand.c_str(),"r");
     pclose(wget);
 
+    std::ifstream is;
+    is.open (filename, std::ios::binary);
+    // 获取文件字节
+    is.seekg (0, std::ios::end);
+    int length = is.tellg();
+    is.seekg (0, std::ios::beg);
+    is.close();
+    if (length <= 0)
+    {
+        remove(filename.c_str());
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 

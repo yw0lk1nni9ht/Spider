@@ -1,24 +1,20 @@
 #ifndef HTTPS_REQUEST_H
 #define HTTPS_REQUEST_H
+#include "request.h"
 #include <iostream>
-#include <boost/beast/http.hpp>
-class https_request
+
+
+class https_request:public BaseRequest
 {
 public:
     https_request();
-    std::string GetRequestTest(std::string _host,std::string _target);
-    bool TryToConnect(std::string url,std::string _target);
-    int GetResponseStatus();
-private:
-    void GetSSLFile();
+    ~https_request();
+    std::string GetRequestTest() override;
+    bool TryToConnect(std::string url,std::string _target) override;
+    int GetResponseStatus() override;
 
-    std::string host;
-    std::string port = "443";
-    std::string target = "/";
-    int const version = 11;
-    void * stream = NULL;
-    std::string _moveurl = "";
-    std::string _body = "";
+private:
+    bool GetSSLFile();
 };
 
 #endif // HTTPS_REQUEST_H

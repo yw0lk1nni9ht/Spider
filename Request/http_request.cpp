@@ -34,6 +34,7 @@ http_request::~http_request()
 }
 
 
+
 /**
  * @brief http请求测试函数
  *
@@ -105,6 +106,8 @@ std::string http_request::GetRequestTest()
     return "success";
 }
 
+
+
 /**
  * @brief 测试url是否有效，初始化成员stream
  * @param url       传入的url
@@ -118,7 +121,7 @@ bool http_request::TryToConnect(std::string url,std::string _target)
     try
     {
         host = url;
-        auto const port = "80";
+        //auto const port = "80";
         target = _target;
 
         // IO上下文
@@ -214,15 +217,3 @@ int http_request::GetResponseStatus()
 }
 
 
-
-std::string http_request::GetMoveUrl()
-{
-    return _moveurl;
-}
-
-
-
-std::string http_request::GetBodyData()
-{
-    return _body;
-}

@@ -2,6 +2,7 @@
 #include "http_request.h"
 #include "https_request.h"
 #include "request.h"
+#include <boost/beast/http.hpp>
 
 enum ReturnNum {
     SUCCESS                 = 0x000,
@@ -28,17 +29,22 @@ RequestHandle::RequestHandle()
 int RequestHandle::Connect(std::string url)
 {
     //判断URL是否可以连通
-    BaseRequest * testhttp = new http_request();
-    https_request testhttps;
-    bool http_connect = testhttp->TryToConnect(url,"/");
+    BaseRequest * request = new http_request();
+    bool http_connect = request->TryToConnect(url,"/");
     if(http_connect)
     {
-        int ret = testhttp->GetResponseStatus();
+        int ret = request->GetResponseStatus();
         //获取返回值 ，重定向
         if (ret == (int)boost::beast::http::status::moved_permanently || ret == (int)boost::beast::http::status::found)
         {
-            std::cout << testhttp->GetMoveUrl() << std::endl;
-            //testhttps.GetRequestTest(url,"/");
+            std::cout << request->GetMoveUrl() << std::endl;
+            delete request;
+            request = NULL;
+            request = new https_request();
+            (https_request*)request->TryToConnect(url,"/");
+            (https_request*)request->GetResponseStatus();
+            std::cout << request->GetBodyData() << std::endl;
+
         }
         else if((ret >= (int)boost::beast::http::status::bad_request
                 && ret <= (int)boost::beast::http::status::network_connect_timeout_error)
