@@ -13,8 +13,13 @@
 #include "requesthandle.h"
 
 using namespace std;
+void _test(std::string temp);
 
 
+void print_callback(string data){
+    std::thread t(_test, data);
+    t.join();
+}
 void _test(std::string temp)
 {
     response_parse test;
@@ -22,18 +27,10 @@ void _test(std::string temp)
 }
 int main()
 {
-
-
-    //https_request test2;
-    //string response =  test2.GetRequest("nvshens.net","/") ;
-    //string a = response.body();
-    //std::cout << response.body() << std::endl;
-
+    //获取网站的数据，并通过回调返回
     RequestHandle t2;
-    int ret = t2.Connect("www.nvshens.net");
-    std::cout << t2.GetRetMessage(ret) << std::endl;
-
-//    std::thread t(_test, response);
-//    t.join();
-
+    int ret = t2.Connect(print_callback,"www.nvshens.net");
+    if (ret == t2.SUCCESS)
+    {
+    }
 }
