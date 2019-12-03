@@ -29,4 +29,5 @@ LIBS += -lpthread
 LIBS += -L/usr/local/ssl/openssl/lib -lssl
 LIBS += -L/usr/local/ssl/openssl/lib -lcrypto
 LIBS += -L$$PWD/lib -lmodest
+LIBS += -L$$PWD/lib -lcurl
 
