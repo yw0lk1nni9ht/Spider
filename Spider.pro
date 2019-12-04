@@ -8,6 +8,7 @@ HEADERS += \
     Request/https_request.h \
     Request/request.h \
     Request/requesthandle.h \
+    datahandle.h \
     response_parse.h \
     downloadhandle.h
 SOURCES += \
@@ -15,6 +16,7 @@ SOURCES += \
     Request/https_request.cpp \
 	Request/request.cpp \
     Request/requesthandle.cpp \
+	datahandle.cpp \
         main.cpp \
     response_parse.cpp \
     downloadhandle.cpp
@@ -28,6 +30,7 @@ INCLUDEPATH += $$PWD/lib
 LIBS += -lpthread
 LIBS += -L/usr/local/ssl/openssl/lib -lssl
 LIBS += -L/usr/local/ssl/openssl/lib -lcrypto
+LIBS += -L/usr/local/boost/lib -lboost_thread
 LIBS += -L$$PWD/lib -lmodest
 LIBS += -L$$PWD/lib -lcurl
 

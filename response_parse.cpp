@@ -6,6 +6,7 @@
 #include <mycss/mycss.h>
 #include <mycss/selectors/init.h>
 #include <mycss/selectors/serialization.h>
+#include "datahandle.h"
 
 mystatus_t serialization_callback2(const char* data, size_t len, void* ctx);
 void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection);
@@ -17,10 +18,16 @@ response_parse::response_parse()
 
 }
 
-void response_parse::parse(std::string response)
+void response_parse::parse(std::string response,int id)
 {
-    _tag_id = MyHTML_TAG_IMG;
-
+    if(id == 1)
+    {
+        _tag_id = MyHTML_TAG_A;
+    }
+    else if (id == 2)
+    {
+        _tag_id = MyHTML_TAG_IMG;
+    }
     // 初始化
     myhtml_t* myhtml = myhtml_create();
     myhtml_init(myhtml, MyHTML_OPTIONS_DEFAULT, 1, 0);
@@ -49,7 +56,8 @@ mystatus_t serialization_callback2(const char* data, size_t len, void* ctx)
         // 获取<a>标签如: <a href="/girl/17886/" target="_blank">
         if (_tag_id == MyHTML_TAG_A)
         {
-            std::cout << GetTagValue("href=\"") << std::endl;
+            //std::cout << GetTagValue("href=\"") << std::endl;
+            DataHandle::AddDataToAQueue(GetTagValue("href=\""));
         }
 
         //获取<img>标签如: <img src="img/grey.gif" data-original="img/example.jpg" width="640" heigh="480">
@@ -61,7 +69,7 @@ mystatus_t serialization_callback2(const char* data, size_t len, void* ctx)
             {
                 ret = GetTagValue("src=\"");
             }
-            std::cout << ret << std::endl;
+            //std::cout << ret << std::endl;
         }
         std::cout << Tag << std::endl << std::endl;
         Tag = "";

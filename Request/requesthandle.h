@@ -15,7 +15,9 @@ public:
     RequestHandle();
     int Connect(void(*printback)(std::string),std::string url,bool ishttps = false);
     std::string GetRetMessage(int retnum);
-
+    std::string GetHostName();
+private:
+    std::string _hostname;
 
 };
 //#endif // REQUESTHANDLE_H

@@ -5,7 +5,7 @@
 #include <boost/beast/http.hpp>
 
 typedef void (*CallbackFun)(std::string data);
-int UseToConnect(RequestHandle * _handle,CallbackFun _callback,BaseRequest * request,std::string host,std::string target);
+int UseToConnect(RequestHandle * _handle,BaseRequest * request,std::string host,std::string target);
 
 RequestHandle::RequestHandle()
 {
@@ -26,6 +26,7 @@ RequestHandle::RequestHandle()
  */
 int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
 {
+    std::cout << url << std::endl;
     //判断url最后的字符是否为/
     if(url[url.length()-1] != '/')
     {
@@ -58,9 +59,35 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
         host = url.substr(0,host_end);
         target  = url.substr(host_end);
     }
+    _hostname = host;
 
     //尝试连接
-    int RetConnect = UseToConnect(this,_callback,request,host,target);
+    int RetConnect = UseToConnect(this,request,host,target);
+    if (RetConnect == URL_301_302)
+    {
+        //302跳转,重新连接新的url
+        if(request->GetRes_MoveUrl().find("https") != std::string::npos)
+        {
+            int ret = Connect(_callback,request->GetRes_MoveUrl(),true);
+            if(request != NULL)
+            {
+                delete request;
+                request = NULL;
+            }
+            return ret;
+        }
+        else if(request->GetRes_MoveUrl().find("http") != std::string::npos)
+        {
+            int ret = Connect(_callback,request->GetRes_MoveUrl(),false);
+            if(request != NULL)
+            {
+                delete request;
+                request = NULL;
+            }
+            return ret;
+        }
+        return URL_ERROR;
+    }
     if (RetConnect != SUCCESS)
     {
         //连接失败则尝试使用另一种方式请求
@@ -76,29 +103,28 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
         else {
             request = new https_request();
         }
-        int RetSecdConnect = UseToConnect(this,_callback,request,host,target);
+        int RetSecdConnect = UseToConnect(this,request,host,target);
         if(RetSecdConnect != SUCCESS)
         {
             if(request != NULL)
             {
                 delete request;
+                request = NULL;
             }
             //判断url合法
             return URL_ERROR;
         }
         _callback(request->GetRes_BodyData());
-        //std::cout << request->GetRes_BodyData() << std::endl;
     }
     else
         _callback(request->GetRes_BodyData());
-        //std::cout << request->GetRes_BodyData() << std::endl;
 
     //结束释放资源
     if(request != NULL)
     {
         delete request;
+        request = NULL;
     }
-    //boost::beast::http::status
     //判断url合法
     return SUCCESS;
 }
@@ -108,7 +134,6 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
 /**
  * @brief 请求连接
  * @param _handle       获取this指针，用于调用一些方法
- * @param _callback     回调方法,用于返回数据
  * @param request       请求连接实例
  * @param host          主机名
  * @param target        路径
@@ -117,7 +142,7 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
  *     -<em>false</em> fail
  *     -<em>true</em> succeed
  */
-int UseToConnect(RequestHandle * _handle,CallbackFun _callback,BaseRequest * request,std::string host,std::string target)
+int UseToConnect(RequestHandle * _handle,BaseRequest * request,std::string host,std::string target)
 {
     //判断URL是否可以连通
     bool IsConnected = request->TryToConnect(host,target);
@@ -127,18 +152,6 @@ int UseToConnect(RequestHandle * _handle,CallbackFun _callback,BaseRequest * req
         //获取返回值，重定向
         if (ret == (int)boost::beast::http::status::moved_permanently || ret == (int)boost::beast::http::status::found)
         {
-            if(request->GetRes_MoveUrl().find("https") != std::string::npos)
-            {
-                _handle->Connect(_callback,request->GetRes_MoveUrl(),true);
-            }
-            else if(request->GetRes_MoveUrl().find("http") != std::string::npos)
-            {
-                _handle->Connect(_callback,request->GetRes_MoveUrl(),false);
-            }
-            else
-            {
-                return _handle->URL_ConnectFail;
-            }
             return _handle->URL_301_302;
         }
         else if((ret >= (int)boost::beast::http::status::bad_request
@@ -182,4 +195,16 @@ std::string RequestHandle::GetRetMessage(int rettonum)
             break;
     }
     return ret;
+}
+
+
+
+/**
+ * @brief 返回主机名
+ *
+ * @return 返回说明
+ *     -<em>string</em> 主机名
+ */
+std::string RequestHandle::GetHostName(){
+    return _hostname;
 }

@@ -11,11 +11,11 @@
 #include "https_request.h"
 #include "response_parse.h"
 #include "requesthandle.h"
-
-#include "curl/curl.h"
+#include "downloadhandle.h"
+#include "datahandle.h"
 
 using namespace std;
-void _test();
+void StartUrl();
 
 
 
@@ -26,7 +26,8 @@ void _test();
  */
 void print_callback(string data){
     response_parse test;
-    test.parse(data);
+    test.parse(data,1);
+    //test.parse(data,2);
 }
 
 
@@ -36,60 +37,49 @@ void print_callback(string data){
  * @param url               要请求的url
  *
  */
-void _test()
+void StartUrl()
 {
     RequestHandle t2;
     int ret = t2.Connect(print_callback,"https://www.nvshens.net");
+    if (ret != t2.SUCCESS)
+    {
+        return;
+    }
+    string hostname = t2.GetHostName();
+    if(hostname != "")
+    {
+        cout << hostname << endl;
+    }
+
+    while(true)
+    {
+        std::string temp = DataHandle::GetDataFromAQueue();
+        if (temp == "")
+        {
+            break;
+        }
+        else
+            t2.Connect(print_callback,hostname+temp);
+    }
 }
 
-
-size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    size_t written = fwrite(ptr, size, nmemb, stream);
-    return written;
-}
 
 int main()
 {
-    CURL *curl;
-    FILE *fp;
-    CURLcode res;
-    char *url = "https://img.onvshen.com:85/girl/22370/22370_s.jpg";
-    char outfilename[FILENAME_MAX] = "page.jpg";
-    curl = curl_easy_init();
-    if (curl)
-    {
-        fp = fopen(outfilename,"wb");
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-        res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
-        fclose(fp);
-    }
 
-//    int fin = open("https://img.onvshen.com:85/girl/22370/22370_s.jpg", O_RDONLY, 0777);
-//    int fout = open("/home/ywin/下载3.jpg", O_WRONLY|O_CREAT, 0777);
+    //DownLoadHandle::DownLoad("https://img.onvshen.com:85/girl/22370/22370_s.jpg");
 
-//    char buff[1024] = {'\0'};
-//    int len = 0;
-//    while((len = read(fin, buff, sizeof(buff))) > 0)
-//    {
-//        write(fout, buff, len);
-//    }
-
-//    close(fin);
-//    close(fout);
-
-
-//    FILE *fp;
-//    if(fp=fopen("https://img.onvshen.com:85/girl/22370/22370_s.jpg","wb"))
-//        puts("打开文件成功");
-//    else
-//        puts("打开文件成败");
-
-
-        std::thread t(_test);
+    std::thread t(StartUrl);
     t.join();
     //获取网站的数据，并通过回调返回
-
+//    while(true)
+//    {
+//        std::string temp = DataHandle::GetDataFromAQueue();
+//        if (temp == "")
+//        {
+//            break;
+//        }
+//        else
+//            std::cout << temp << std::endl;
+//    }
 }
