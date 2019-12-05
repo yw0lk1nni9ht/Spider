@@ -8,12 +8,16 @@ public:
     BaseRequest();
     ~BaseRequest();
     virtual std::string GetRequestTest();
-    virtual bool TryToConnect(std::string url,std::string _target);
+    virtual bool MakeConnect(std::string url);
+    virtual int SendRequest(std::string url,std::string _target);
+    virtual void CloseConnect();
+    virtual bool GetConnected();
+    virtual std::string GetConnectedHost();
+
     virtual std::string GetRes_MoveUrl();
     virtual std::string GetRes_BodyData();
     virtual int GetRes_Status();
 protected:
-    virtual int GetResponseStatus();
     std::string host;
     std::string port;
     std::string target = "/";
@@ -22,6 +26,7 @@ protected:
     std::string _moveurl = "";
     std::string _body = "";
     int _status = 0;
+    bool IsConnect = false;
 };
 #endif // REQUEST_H
 

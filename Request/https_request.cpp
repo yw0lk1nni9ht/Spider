@@ -208,19 +208,19 @@ std::string https_request::GetRequestTest()
 
 
 /**
- * @brief 测试url是否有效，初始化成员stream
+ * @brief 建立连接,测试url是否有效，初始化成员stream
  * @param url       传入的url
  *
  * @return 返回说明
- *     -<em>false</em>  url无效
- *     -<em>true</em>   url有效
+ *     -<em>false</em>  url无效，连接建立失败
+ *     -<em>true</em>   url有效,连接建立成功
  */
-bool https_request::TryToConnect(std::string url,std::string _target)
+bool https_request::MakeConnect(std::string url)
 {
     try
     {
     host = url;
-    target = _target;
+    //target = _target;
 
     if (!GetSSLFile())
     {
@@ -263,13 +263,14 @@ bool https_request::TryToConnect(std::string url,std::string _target)
 
     // 执行SSL握手
     ((beast::ssl_stream<beast::tcp_stream>*)stream)->handshake(ssl::stream_base::client);
-    _status = GetResponseStatus();
+    IsConnect = true;
     return true;
     }
     catch(beast::system_error e)
     {
-        _status = GetResponseStatus();
+        //_status = GetResponseStatus();
         std::cerr << "https_Try_Error: " << e.what() << std::endl;
+        IsConnect = false;
         return false;
     }
 }
@@ -282,8 +283,11 @@ bool https_request::TryToConnect(std::string url,std::string _target)
  * @return 返回说明
  *     -<em>int</em> http响应状态值
  */
-int https_request::GetResponseStatus()
+int https_request::SendRequest(std::string url,std::string _target)
 {
+    host = url;
+    //auto const port = "80";
+    target = _target;
     try
     {
         if (stream == NULL)
@@ -318,6 +322,40 @@ int https_request::GetResponseStatus()
             _moveurl = std::string((res.at(http::field::location)).data());
         }
 
+//        // 关闭连接
+//        beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
+//        beast::error_code ec2;
+//        ((beast::ssl_stream<beast::tcp_stream>*)stream)->shutdown(ec2);
+//        if(stream !=NULL)
+//        {
+//            delete stream;
+//            stream = NULL;
+//        }
+//        if(ec2 == net::error::eof)
+//        {
+//            // Rationale:
+//            // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+//            ec2 = {};
+//        }
+//        if(ec2)
+//        {
+//            return (int)res.base().result();
+//            throw beast::system_error{ec2};
+//        }
+        return (int)res.base().result();
+    }
+    catch (beast::system_error e)
+    {
+        std::cerr << "https_Get_Error: " << e.what() << std::endl;
+        return (int)http::status::unknown;
+    }
+}
+
+
+
+void https_request::CloseConnect(){
+    if (stream != NULL)
+    {
         // 关闭连接
         beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
         beast::error_code ec2;
@@ -335,18 +373,11 @@ int https_request::GetResponseStatus()
         }
         if(ec2)
         {
-            return (int)res.base().result();
-            throw beast::system_error{ec2};
+            //return (int)res.base().result();
         }
-        return (int)res.base().result();
     }
-    catch (beast::system_error e)
-    {
-        std::cerr << "https_Get_Error: " << e.what() << std::endl;
-        return (int)http::status::unknown;
-    }
+    IsConnect = false;
 }
-
 
 
 /**

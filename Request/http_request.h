@@ -10,9 +10,10 @@ public:
     http_request();
     ~http_request();
      std::string GetRequestTest() override;
-     bool TryToConnect(std::string url,std::string _target) override;
+     bool MakeConnect(std::string url) override;
+     int SendRequest(std::string url,std::string _target) override;
+     void CloseConnect() override;
 private :
-     int GetResponseStatus() override;
 };
 
 #endif // HTTP_REQUEST_H

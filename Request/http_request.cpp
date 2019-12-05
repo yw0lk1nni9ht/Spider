@@ -110,20 +110,20 @@ std::string http_request::GetRequestTest()
 
 
 /**
- * @brief 测试url是否有效，初始化成员stream
+ * @brief 建立连接,测试url是否有效，初始化成员stream
  * @param url       传入的url
  *
  * @return 返回说明
- *     -<em>false</em>  url无效
- *     -<em>true</em>   url有效
+ *     -<em>false</em>  url无效，连接建立失败
+ *     -<em>true</em>   url有效，连接建立成功
  */
-bool http_request::TryToConnect(std::string url,std::string _target)
+bool http_request::MakeConnect(std::string url)
 {
     try
     {
         host = url;
         //auto const port = "80";
-        target = _target;
+        //target = _target;
 
         if(stream == NULL)
         {
@@ -147,10 +147,11 @@ bool http_request::TryToConnect(std::string url,std::string _target)
             if (ec.failed())
             {
                 _status = (int)http::status::unknown;
+                IsConnect = false;
                 return false;
             }
         }
-        _status = GetResponseStatus();
+        IsConnect = true;
         return true;
     }
     catch(boost::system::system_error e)
@@ -164,13 +165,19 @@ bool http_request::TryToConnect(std::string url,std::string _target)
 
 
 /**
- * @brief 获取HTTP响应码,若为302，则记录重定向的url；记录body
+ * @brief 发送http请求
  *
  * @return 返回说明
- *     -<em>int</em> http响应状态值
+ *     -<em>int</em> http响应状态值,若为302，则记录重定向的url；记录body
  */
-int http_request::GetResponseStatus()
+int http_request::SendRequest(std::string url,std::string _target)
 {
+    if (host != url)
+    {
+        return (int)http::status::unknown;
+    }
+    //auto const port = "80";
+    target = _target;
     try
     {
         if (stream == NULL)
@@ -206,18 +213,7 @@ int http_request::GetResponseStatus()
             _moveurl = std::string(res.at(http::field::location)).data();
         }
 
-//        // 关闭stream的Socket连接
-//        beast::error_code ec;
-//        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
-//        if (ec)
-//        {
-//            std::cout << "An error occurred in shutdown socket." << std::endl;
-//        }
-//        if(stream !=NULL)
-//        {
-//            delete stream;
-//            stream = NULL;
-//        }
+
         //return (int)((http::response_header<>)res.base()).result();
         return (int)res.base().result();
     }
@@ -228,4 +224,23 @@ int http_request::GetResponseStatus()
     }
 }
 
+
+void http_request::CloseConnect(){
+    if (stream != NULL)
+    {
+        // 关闭stream的Socket连接
+        beast::error_code ec;
+        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
+        if (ec)
+        {
+            std::cout << "An error occurred in shutdown socket." << std::endl;
+        }
+        if(stream !=NULL)
+        {
+            delete stream;
+            stream = NULL;
+        }
+    }
+    IsConnect = false;
+}
 

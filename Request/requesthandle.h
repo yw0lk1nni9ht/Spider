@@ -1,7 +1,7 @@
 //#ifndef REQUESTHANDLE_H
 //#define REQUESTHANDLE_H
 #include<iostream>
-
+#include"request.h"
 
 class RequestHandle
 {
@@ -18,6 +18,8 @@ public:
     std::string GetHostName();
 private:
     std::string _hostname;
+    BaseRequest * request = NULL;
+
 
 };
 //#endif // REQUESTHANDLE_H

@@ -11,11 +11,28 @@ std::string BaseRequest::GetRequestTest(){}
 
 
 
-bool BaseRequest::TryToConnect(std::string url,std::string _target){}
+bool BaseRequest::MakeConnect(std::string url){}
 
 
 
-int BaseRequest::GetResponseStatus(){}
+int BaseRequest::SendRequest(std::string url,std::string _target){}
+
+
+
+void BaseRequest::CloseConnect(){}
+
+
+
+bool BaseRequest::GetConnected(){
+    return IsConnect;
+}
+
+
+
+std::string BaseRequest::GetConnectedHost()
+{
+    return host;
+}
 
 
 
