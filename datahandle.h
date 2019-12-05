@@ -12,6 +12,7 @@ public:
     static void AddDataToIMGQueue(std::string img);
     static std::string GetDataFromAQueue();
     static std::string GetDataFromIMGQueue();
+    static int GetAQueueLength();
 private:
     static void AddDataToQueue(std::string data,int id);
 

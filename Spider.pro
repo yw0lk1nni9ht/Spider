@@ -8,6 +8,7 @@ HEADERS += \
     Request/https_request.h \
     Request/request.h \
     Request/requesthandle.h \
+    dataclean.h \
     datahandle.h \
     response_parse.h \
     downloadhandle.h
@@ -16,6 +17,7 @@ SOURCES += \
     Request/https_request.cpp \
 	Request/request.cpp \
     Request/requesthandle.cpp \
+	dataclean.cpp \
 	datahandle.cpp \
         main.cpp \
     response_parse.cpp \

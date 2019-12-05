@@ -10,6 +10,10 @@ static boost::mutex pop_mutex;
 static std::queue<std::string> A_QUEUE;
 static std::queue<std::string> IMG_QUEUE;
 
+int DataHandle::GetAQueueLength()
+{
+    return A_QUEUE.size();
+}
 std::string DataHandle::GetDataFromAQueue(){
     if(!A_QUEUE.empty())
     {

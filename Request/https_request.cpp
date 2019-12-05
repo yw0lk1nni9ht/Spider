@@ -266,10 +266,10 @@ bool https_request::TryToConnect(std::string url,std::string _target)
     _status = GetResponseStatus();
     return true;
     }
-    catch(std::exception e)
+    catch(beast::system_error e)
     {
         _status = GetResponseStatus();
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "https_Try_Error: " << e.what() << std::endl;
         return false;
     }
 }
@@ -322,6 +322,11 @@ int https_request::GetResponseStatus()
         beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
         beast::error_code ec2;
         ((beast::ssl_stream<beast::tcp_stream>*)stream)->shutdown(ec2);
+        if(stream !=NULL)
+        {
+            delete stream;
+            stream = NULL;
+        }
         if(ec2 == net::error::eof)
         {
             // Rationale:
@@ -335,9 +340,9 @@ int https_request::GetResponseStatus()
         }
         return (int)res.base().result();
     }
-    catch (std::exception e)
+    catch (beast::system_error e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "https_Get_Error: " << e.what() << std::endl;
         return (int)http::status::unknown;
     }
 }

@@ -57,7 +57,11 @@ mystatus_t serialization_callback2(const char* data, size_t len, void* ctx)
         if (_tag_id == MyHTML_TAG_A)
         {
             //std::cout << GetTagValue("href=\"") << std::endl;
-            DataHandle::AddDataToAQueue(GetTagValue("href=\""));
+            std::string temp = GetTagValue("href=\"");
+            if (temp.substr(0,1) == "/")
+            {
+                DataHandle::AddDataToAQueue(temp);
+            }
         }
 
         //获取<img>标签如: <img src="img/grey.gif" data-original="img/example.jpg" width="640" heigh="480">
@@ -69,9 +73,12 @@ mystatus_t serialization_callback2(const char* data, size_t len, void* ctx)
             {
                 ret = GetTagValue("src=\"");
             }
+
+            DataHandle::AddDataToIMGQueue(ret);
+
             //std::cout << ret << std::endl;
         }
-        std::cout << Tag << std::endl << std::endl;
+        //std::cout << Tag << std::endl << std::endl;
         Tag = "";
     }
 
@@ -81,13 +88,13 @@ mystatus_t serialization_callback2(const char* data, size_t len, void* ctx)
 void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection)
 {
     if(collection) {
-        printf("%s:\n", caption);
+        //printf("%s:\n", caption);
 
         for(size_t i = 0; i < collection->length; i++) {
             myhtml_serialization_node_callback(collection->list[i], serialization_callback2, NULL);
         }
 
-        printf("\n");
+        //printf("\n");
     }
     else {
         printf("%s: empty\n", caption);

@@ -33,6 +33,7 @@ http_request::~http_request()
     }
 }
 
+bool is_first =true;
 
 
 /**
@@ -124,35 +125,38 @@ bool http_request::TryToConnect(std::string url,std::string _target)
         //auto const port = "80";
         target = _target;
 
-        // IO上下文
-        net::io_context ioc;
-
-        // TCP分解器
-        tcp::resolver resolver(ioc);
-
-        //创建TCP流式结构
-        if (stream == NULL)
+        if(stream == NULL)
         {
-            stream = new beast::tcp_stream(ioc);
-        }
+            // IO上下文
+            net::io_context ioc;
 
-        // 找到endpoint
-        auto const results = resolver.resolve(host, port);
-        // 通过我们找到的endpoint，与之建立socket连接
-        beast::error_code ec;
-        ((beast::tcp_stream*)stream)->connect(results,ec);
-        if (ec.failed())
-        {
-            _status = (int)http::status::unknown;
-            return false;
+            // TCP分解器
+            tcp::resolver resolver(ioc);
+
+            //创建TCP流式结构
+            if (stream == NULL)
+            {
+                stream = new beast::tcp_stream(ioc);
+            }
+
+            // 找到endpoint
+            auto const results = resolver.resolve(host, port);
+            // 通过我们找到的endpoint，与之建立socket连接
+            beast::error_code ec;
+            ((beast::tcp_stream*)stream)->connect(results,ec);
+            if (ec.failed())
+            {
+                _status = (int)http::status::unknown;
+                return false;
+            }
         }
         _status = GetResponseStatus();
         return true;
     }
-    catch(std::exception e)
+    catch(boost::system::system_error e)
     {
         _status = (int)http::status::unknown;
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "http_Try_Error: " << e.what() << std::endl;
         return false;
     }
 }
@@ -202,19 +206,24 @@ int http_request::GetResponseStatus()
             _moveurl = std::string(res.at(http::field::location)).data();
         }
 
-        // 关闭stream的Socket连接
-        beast::error_code ec;
-        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
-        if (ec)
-        {
-            std::cout << "An error occurred in shutdown socket." << std::endl;
-        }
+//        // 关闭stream的Socket连接
+//        beast::error_code ec;
+//        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
+//        if (ec)
+//        {
+//            std::cout << "An error occurred in shutdown socket." << std::endl;
+//        }
+//        if(stream !=NULL)
+//        {
+//            delete stream;
+//            stream = NULL;
+//        }
         //return (int)((http::response_header<>)res.base()).result();
         return (int)res.base().result();
     }
-    catch (std::exception e)
+    catch (beast::system_error e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "http_Get_Error: " << e.what() << std::endl;
         return (int)http::status::unknown;
     }
 }
