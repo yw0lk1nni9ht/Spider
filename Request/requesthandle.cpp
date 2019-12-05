@@ -129,9 +129,9 @@ RequestHandle::RequestHandle()
 //    return SUCCESS;
 //}
 
-int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
+int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps, bool isReconnect)
 {
-    std::cout << "请求的url:" << url << std::endl;
+    //std::cout << "请求的url:" << url << std::endl;
 
     //判断url最后的字符是否为/
     if(url[url.length()-1] != '/')
@@ -197,7 +197,7 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
     if(!request->GetConnected())
     {
         request->MakeConnect(host);
-        _hostname == host;
+        _hostname = host;
     }
 
     //发送请求
@@ -208,11 +208,13 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
         //302跳转,重新连接新的url
         if(request->GetRes_MoveUrl().find("https") != std::string::npos)
         {
+            request->CloseConnect();
             int ret = Connect(_callback,request->GetRes_MoveUrl(),true);
             return ret;
         }
         else if(request->GetRes_MoveUrl().find("http") != std::string::npos)
         {
+            request->CloseConnect();
             int ret = Connect(_callback,request->GetRes_MoveUrl(),false);
             return ret;
         }
@@ -222,13 +224,18 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps)
                              && ret_reqstatus <= (int)boost::beast::http::status::network_connect_timeout_error))
                              || ret_reqstatus == (int)boost::beast::http::status::unknown)
     {
-        //连接失败则尝试使用另一种方式请求
-        if(ishttps)
+        //连接失败则尝试使用另一种方式请求,Connect第四个参数，表示重连，避免无妨访问的url陷入死循环
+        if(!isReconnect)
         {
-            Connect(_callback,request->GetRes_MoveUrl(),false);
-        }
-        else {
-            Connect(_callback,request->GetRes_MoveUrl(),true);
+            if(ishttps)
+            {
+                request->CloseConnect();
+                Connect(_callback,url,false,true);
+            }
+            else {
+                request->CloseConnect();
+                Connect(_callback,url,true,true);
+            }
         }
     }
     else

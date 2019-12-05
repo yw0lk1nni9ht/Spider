@@ -44,6 +44,11 @@ void response_parse::parse(std::string response,int id)
 
     //回调显示
     print_found_result("In First tree" , tree , titles_list);
+
+       // release resources
+    myhtml_collection_destroy(titles_list);
+    myhtml_tree_destroy(tree);
+    myhtml_destroy(myhtml);
 }
 
 

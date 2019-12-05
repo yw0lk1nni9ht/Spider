@@ -13,7 +13,7 @@ public:
         URL_301_302             = 0x003,
     };
     RequestHandle();
-    int Connect(void(*printback)(std::string),std::string url,bool ishttps = false);
+    int Connect(void(*printback)(std::string),std::string url,bool ishttps = false,bool isReConnect = false);
     std::string GetRetMessage(int retnum);
     std::string GetHostName();
 private:

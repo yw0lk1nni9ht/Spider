@@ -27,7 +27,7 @@ void Downloader();
  */
 void print_callback(string data){
     response_parse test;
-    if (DataHandle::GetAQueueLength() < 25000)
+    if (DataHandle::GetAQueueLength() < 2500)
     {
         test.parse(data,1);
     }
@@ -44,7 +44,7 @@ void print_callback(string data){
 void StartUrl()
 {
     RequestHandle t2;
-    int ret = t2.Connect(print_callback,"www.4399.com");
+    int ret = t2.Connect(print_callback,"www.nvshens.net");
     if (ret != t2.SUCCESS)
     {
         return;
@@ -83,15 +83,15 @@ void Downloader()
         {
             sleep(1);
             i++;
-            if ( i >= 30)
-                break;
-            else
-                continue;
+            //if ( i >= 30)
+                //break;
+            //else
+            //    continue;
         }
         else
         {
-            cout << "IMG:" << temp << endl;
-            DownLoadHandle::DownLoad(temp);
+            //cout << "IMG:" << temp << endl;
+            //DownLoadHandle::DownLoad(temp);
         }
     }
 }
