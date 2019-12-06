@@ -226,21 +226,28 @@ int http_request::SendRequest(std::string url,std::string _target)
 
 
 void http_request::CloseConnect(){
-    if (stream != NULL)
-    {
-        // 关闭stream的Socket连接
-        beast::error_code ec;
-        ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
-        if (ec)
+    try{
+        if (stream != NULL)
         {
-            std::cout << "An error occurred in shutdown socket." << std::endl;
+            // 关闭stream的Socket连接
+            beast::error_code ec;
+            ((beast::tcp_stream*)stream)->socket().shutdown(tcp::socket::shutdown_send, ec);
+            if (ec)
+            {
+                std::cout << "An error occurred in shutdown socket." << std::endl;
+            }
+            if(stream !=NULL)
+            {
+                delete stream;
+                stream = NULL;
+            }
         }
-        if(stream !=NULL)
-        {
-            delete stream;
-            stream = NULL;
-        }
+        IsConnect = false;
     }
-    IsConnect = false;
+    catch (beast::system_error e)
+    {
+        IsConnect = false;
+        std::cerr << "https_Close_Error: " << e.what() << std::endl;
+    }
 }
 

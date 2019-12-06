@@ -196,7 +196,10 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps, b
     //建立连接
     if(!request->GetConnected())
     {
-        request->MakeConnect(host);
+        if(!request->MakeConnect(host))
+        {
+            return URL_ERROR;
+        }
         _hostname = host;
     }
 
@@ -208,12 +211,14 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps, b
         //302跳转,重新连接新的url
         if(request->GetRes_MoveUrl().find("https") != std::string::npos)
         {
+            _hostname = "";
             request->CloseConnect();
             int ret = Connect(_callback,request->GetRes_MoveUrl(),true);
             return ret;
         }
         else if(request->GetRes_MoveUrl().find("http") != std::string::npos)
         {
+            _hostname = "";
             request->CloseConnect();
             int ret = Connect(_callback,request->GetRes_MoveUrl(),false);
             return ret;
@@ -229,10 +234,12 @@ int RequestHandle::Connect(CallbackFun _callback,std::string url,bool ishttps, b
         {
             if(ishttps)
             {
+                _hostname = "";
                 request->CloseConnect();
                 Connect(_callback,url,false,true);
             }
             else {
+                _hostname = "";
                 request->CloseConnect();
                 Connect(_callback,url,true,true);
             }

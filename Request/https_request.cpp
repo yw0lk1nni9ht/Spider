@@ -354,29 +354,36 @@ int https_request::SendRequest(std::string url,std::string _target)
 
 
 void https_request::CloseConnect(){
-    if (stream != NULL)
-    {
-        // 关闭连接
-        beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
-        beast::error_code ec2;
-        ((beast::ssl_stream<beast::tcp_stream>*)stream)->shutdown(ec2);
-        if(stream !=NULL)
+    try{
+        if (stream != NULL)
         {
-            delete stream;
-            stream = NULL;
+            // 关闭连接
+            beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
+            beast::error_code ec2;
+            ((beast::ssl_stream<beast::tcp_stream>*)stream)->shutdown(ec2);
+            if(stream !=NULL)
+            {
+                delete stream;
+                stream = NULL;
+            }
+            if(ec2 == net::error::eof)
+            {
+                // Rationale:
+                // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+                ec2 = {};
+            }
+            if(ec2)
+            {
+                //return (int)res.base().result();
+            }
         }
-        if(ec2 == net::error::eof)
-        {
-            // Rationale:
-            // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-            ec2 = {};
-        }
-        if(ec2)
-        {
-            //return (int)res.base().result();
-        }
+        IsConnect = false;
     }
-    IsConnect = false;
+    catch (beast::system_error e)
+    {
+        IsConnect = false;
+        std::cerr << "https_Close_Error: " << e.what() << std::endl;
+    }
 }
 
 

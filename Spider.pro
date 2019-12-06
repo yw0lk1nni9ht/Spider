@@ -11,7 +11,8 @@ HEADERS += \
     dataclean.h \
     datahandle.h \
     response_parse.h \
-    downloadhandle.h
+    downloadhandle.h \
+    threadpool.h
 SOURCES += \
     Request/http_request.cpp \
     Request/https_request.cpp \

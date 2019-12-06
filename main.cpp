@@ -13,6 +13,7 @@
 #include "requesthandle.h"
 #include "downloadhandle.h"
 #include "datahandle.h"
+#include "threadpool.h"
 
 using namespace std;
 void StartUrl();
@@ -60,11 +61,11 @@ void StartUrl()
         std::string temp = DataHandle::GetDataFromAQueue();
         if (temp == "")
         {
-            break;
+            //break;
         }
         else
         {
-            cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
+            //cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
             t2.Connect(print_callback,hostname+temp);
         }
     }
@@ -91,7 +92,7 @@ void Downloader()
         else
         {
             //cout << "IMG:" << temp << endl;
-            //DownLoadHandle::DownLoad(temp);
+            DownLoadHandle::DownLoad(temp);
         }
     }
 }
@@ -107,18 +108,49 @@ int main()
     //DownLoadHandle::DownLoad("https://img.onvshen.com:85/girl/22370/22370_s.jpg");
 
     std::thread t(StartUrl);
-    std::thread t2(Downloader);
-    t.join();
-    t2.join();
-    //获取网站的数据，并通过回调返回
-//    while(true)
-//    {
-//        std::string temp = DataHandle::GetDataFromAQueue();
-//        if (temp == "")
-//        {
-//            break;
+    //std::thread t2(Downloader);
+
+    // create thread pool with 4 worker threads
+    ThreadPool pool(4);
+
+    // enqueue and store future
+    for(int i = 0; i < 8; ++i) {
+        auto result = pool.enqueue([i] {
+            while(true)
+            {
+                std::string temp = DataHandle::GetDataFromIMGQueue();
+                if(temp != "")
+                {
+                    cout << "IMG:" << temp << endl;
+                    DownLoadHandle::DownLoad(temp);
+                }
+                else{
+                    cout << "IMG:   NULL"   << endl;
+                }
+            }
+        });
+    }
+    // get result from future
+    //std::cout << result.get() << std::endl;
+
+//    std::vector< std::future<int> > results;
+
+//        for(int i = 0; i < 8; ++i) {
+//            results.emplace_back(
+//                pool.enqueue([i] {
+//                    std::cout << "hello " << i << std::endl;
+//                    std::this_thread::sleep_for(std::chrono::seconds(1));
+//                    std::cout << "world " << i << std::endl;
+//                    return i*i;
+//                })
+//            );
 //        }
-//        else
-//            std::cout << temp << std::endl;
-//    }
+
+//        for(auto && result: results)
+//            std::cout << result.get() << ' ';
+//        std::cout << std::endl;
+
+    t.join();
+    //t2.join();
+
 }
