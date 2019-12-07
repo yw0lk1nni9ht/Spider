@@ -28,7 +28,7 @@ void Downloader();
  */
 void print_callback(string data){
     response_parse test;
-    if (DataHandle::GetAQueueLength() < 2500)
+    if (DataHandle::GetAQueueLength() < 25000)
     {
         test.parse(data,1);
     }
@@ -55,6 +55,28 @@ void StartUrl()
     {
         cout << hostname << endl;
     }
+
+//    ThreadPool pool(3);
+
+//    // enqueue and store future
+//    for(int i = 0; i < 6; ++i) {
+//        auto result = pool.enqueue([i](string hostname) {
+//            RequestHandle t2;
+//            while(true)
+//            {
+//                std::string temp = DataHandle::GetDataFromAQueue();
+//                if (temp == "")
+//                {
+//                    //break;
+//                }
+//                else
+//                {
+//                    //cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
+//                    t2.Connect(print_callback,hostname+temp);
+//                }
+//            }
+//        },hostname);
+//    }
 
     while(true)
     {
@@ -110,11 +132,11 @@ int main()
     std::thread t(StartUrl);
     //std::thread t2(Downloader);
 
-    // create thread pool with 4 worker threads
-    ThreadPool pool(4);
+    //create thread pool with 4 worker threads
+    ThreadPool pool(8);
 
     // enqueue and store future
-    for(int i = 0; i < 8; ++i) {
+    for(int i = 0; i < 16; ++i) {
         auto result = pool.enqueue([i] {
             while(true)
             {
@@ -130,25 +152,6 @@ int main()
             }
         });
     }
-    // get result from future
-    //std::cout << result.get() << std::endl;
-
-//    std::vector< std::future<int> > results;
-
-//        for(int i = 0; i < 8; ++i) {
-//            results.emplace_back(
-//                pool.enqueue([i] {
-//                    std::cout << "hello " << i << std::endl;
-//                    std::this_thread::sleep_for(std::chrono::seconds(1));
-//                    std::cout << "world " << i << std::endl;
-//                    return i*i;
-//                })
-//            );
-//        }
-
-//        for(auto && result: results)
-//            std::cout << result.get() << ' ';
-//        std::cout << std::endl;
 
     t.join();
     //t2.join();

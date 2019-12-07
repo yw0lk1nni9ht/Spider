@@ -3,11 +3,40 @@
 #include <openssl/md5.h>
 #include <string>
 #include <fstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include "unistd.h"
 using namespace std;
 
 DownLoadHandle::DownLoadHandle()
 {
 
+}
+
+static int createdir(string str,string& retfilepath)
+{
+    int ret = 0;
+
+    /*  https://img.onvshen.com:85/article/11106/01.jpg   */
+    str = str.substr(str.find("://")+3);
+    str = "Result/" + str;
+    while(str.find('/') != string::npos)
+    {
+        string filename = str.substr(0,str.find('/'));
+        retfilepath += filename;
+        str = str.substr(str.find('/') + 1);
+
+        //判断文件夹是否已经存在
+        if(access(retfilepath.c_str(),00) < 0)
+        {
+            ret += mkdir(retfilepath.c_str(),S_IRWXU);
+        }
+
+        retfilepath += "/";
+    }
+    retfilepath.append(str);
+    return ret;
+    //int mkdir(const char *pathname, mode_t mode);
 }
 
 //md5
@@ -39,12 +68,22 @@ void DownLoadHandle::DownLoad(string _url)
     FILE *fp;
     CURLcode res;
 
+    string ret;
+    if (createdir(_url,ret) < 0)
+    {
+        return;
+    }
     char *url = (char*)_url.c_str();
     char *outfilename = NULL;
-    string ret ="Test/";
-    md5(_url,ret);
-    ret.append(_url.substr(_url.rfind('.')));
     outfilename = (char*)ret.c_str();
+
+//    //通过把整个url编码成md5,来判断是否重复。需要先创建Test文件夹
+//    char *url = (char*)_url.c_str();
+//    char *outfilename = NULL;
+//    string ret ="Test/";
+//    md5(_url,ret);
+//    ret.append(_url.substr(_url.rfind('.')));
+//    outfilename = (char*)ret.c_str();
 
     //文件存在则不下载
     std::fstream _file;
