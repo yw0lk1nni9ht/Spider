@@ -19,8 +19,6 @@ using namespace std;
 void StartUrl();
 void Downloader();
 
-
-
 /**
  * @brief 回调函数，用于获取Request类请求页面后的Body数据,并且解析
  * @param data      数据
@@ -32,6 +30,7 @@ void print_callback(string data){
     {
         test.parse(data,1);
     }
+
     test.parse(data,2);
 }
 
@@ -56,10 +55,10 @@ void StartUrl()
         cout << hostname << endl;
     }
 
-//    ThreadPool pool(3);
+//    ThreadPool pool(4);
 
 //    // enqueue and store future
-//    for(int i = 0; i < 6; ++i) {
+//    for(int i = 0; i < 10; ++i) {
 //        auto result = pool.enqueue([i](string hostname) {
 //            RequestHandle t2;
 //            while(true)
@@ -71,7 +70,7 @@ void StartUrl()
 //                }
 //                else
 //                {
-//                    //cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
+//                    cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
 //                    t2.Connect(print_callback,hostname+temp);
 //                }
 //            }
@@ -133,10 +132,10 @@ int main()
     //std::thread t2(Downloader);
 
     //create thread pool with 4 worker threads
-    ThreadPool pool(8);
+    ThreadPool pool(3);
 
     // enqueue and store future
-    for(int i = 0; i < 16; ++i) {
+    for(int i = 0; i < 3; ++i) {
         auto result = pool.enqueue([i] {
             while(true)
             {

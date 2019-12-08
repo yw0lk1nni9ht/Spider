@@ -8,11 +8,11 @@
 #include <mycss/selectors/serialization.h>
 #include "datahandle.h"
 
-mystatus_t serialization_callback2(const char* data, size_t len, void* ctx);
-void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection);
-std::string GetTagValue(const char* _attributeName);
+//mystatus_t serialization_callback2(const char* data, size_t len, void* ctx);
+//void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection);
+std::string GetTagValue(std::string Tag,const char* _attributeName);
 std::string Tag = "";
-myhtml_tag_id_t _tag_id = MyHTML_TAG__UNDEF;
+//myhtml_tag_id_t _tag_id = MyHTML_TAG__UNDEF;
 response_parse::response_parse()
 {
 
@@ -42,71 +42,87 @@ void response_parse::parse(std::string response,int id)
     // 获取包含所有ID标签的值的结构
     myhtml_collection_t *titles_list = myhtml_get_nodes_by_tag_id(tree, NULL, _tag_id, NULL);
 
-    //回调显示
+    // 遍历元素
     print_found_result("In First tree" , tree , titles_list);
 
-       // release resources
+    // 释放资源
     myhtml_collection_destroy(titles_list);
     myhtml_tree_destroy(tree);
     myhtml_destroy(myhtml);
 }
 
 
-mystatus_t serialization_callback2(const char* data, size_t len, void* ctx)
+
+/**
+ * @brief 解析标签，并加入到队列
+ * @param data              标签字符串，如<a href="/girl/17886/" target="_blank">
+ * @param len               标签长度，如39
+ *
+ * @return 返回说明
+ *     -<em>mystatus_t</em> 状态值
+ */
+mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx)
 {
+    //转化成字符串
     std::string temp = std::string(data);
-    Tag.append(temp);
-    if(temp.compare(">") == 0)
+
+    // 获取<a>标签如: <a href="/girl/17886/" target="_blank">
+    if (_tag_id == MyHTML_TAG_A)
     {
-        // 获取<a>标签如: <a href="/girl/17886/" target="_blank">
-        if (_tag_id == MyHTML_TAG_A)
+        //std::cout << GetTagValue("href=\"") << std::endl;
+        std::string ret = GetTagValue(temp,"href=\"");
+        if (ret.substr(0,1) == "/")
         {
-            //std::cout << GetTagValue("href=\"") << std::endl;
-            std::string temp = GetTagValue("href=\"");
-            if (temp.substr(0,1) == "/")
-            {
-                DataHandle::AddDataToAQueue(temp);
-            }
+            DataHandle::AddDataToAQueue(ret);
+        }
+        //std::cout << ret << std::endl;
+    }
+
+    //获取<img>标签如: <img src="img/grey.gif" data-original="img/example.jpg" width="640" heigh="480">
+    if (_tag_id == MyHTML_TAG_IMG)
+    {
+        //如果存在"data-original"就获取这里的值, 如果没有，就从"src"获取
+        std::string ret = GetTagValue(temp,"data-original=\"");
+        if (ret == "")
+        {
+            ret = GetTagValue(temp,"src=\"");
         }
 
-        //获取<img>标签如: <img src="img/grey.gif" data-original="img/example.jpg" width="640" heigh="480">
-        if (_tag_id == MyHTML_TAG_IMG)
-        {
-            //如果存在"data-original"就获取这里的值, 如果没有，就从"src"获取
-            std::string ret = GetTagValue("data-original=\"");
-            if (ret == "")
-            {
-                ret = GetTagValue("src=\"");
-            }
+        DataHandle::AddDataToIMGQueue(ret);
 
-            DataHandle::AddDataToIMGQueue(ret);
-
-            //std::cout << ret << std::endl;
-        }
-        //std::cout << Tag << std::endl << std::endl;
-        Tag = "";
+        //std::cout << ret << std::endl;
     }
 
     return MyCORE_STATUS_OK;
 }
 
-void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection)
+void response_parse::print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection)
 {
     if(collection) {
-        //printf("%s:\n", caption);
-
         for(size_t i = 0; i < collection->length; i++) {
-            myhtml_serialization_node_callback(collection->list[i], serialization_callback2, NULL);
-        }
+            //myhtml_serialization_node_callback(collection->list[i], serialization_callback2, NULL);
 
-        //printf("\n");
+            mycore_string_raw _data = {};
+            myhtml_serialization_node(collection->list[i],&_data);
+            ResolveTag(_data.data,_data.length,NULL);
+        }
     }
     else {
         printf("%s: empty\n", caption);
     }
 }
 
-std::string GetTagValue(const char* _attributeName)
+
+
+/**
+ * @brief 获取标签的值
+ * @param Tag       标签字符串，如<a href="/girl/17886/" target="_blank">
+ * @param _attributeName       属性名称，如href="
+ *
+ * @return 返回说明
+ *     -<em>string</em> 属性值，如/girl/17886/
+ */
+std::string GetTagValue(std::string Tag,const char* _attributeName)
 {
     if (Tag.find(_attributeName) != std::string::npos)
     {
