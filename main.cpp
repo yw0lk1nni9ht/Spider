@@ -14,10 +14,13 @@
 #include "downloadhandle.h"
 #include "datahandle.h"
 #include "threadpool.h"
+#include "DataFilter/dataclean.h"
+#include "DataFilter/bloomfilter.h"
 
 using namespace std;
 void StartUrl();
 void Downloader();
+BloomFilter<std::string> filter(100);
 
 /**
  * @brief 回调函数，用于获取Request类请求页面后的Body数据,并且解析
@@ -26,12 +29,24 @@ void Downloader();
  */
 void print_callback(string data){
     response_parse test;
-    if (DataHandle::GetAQueueLength() < 25000)
+    if (DataHandle::GetAQueueLength() < 2500)
     {
         test.parse(data,1);
     }
-
     test.parse(data,2);
+}
+
+
+int cleandata_callback(string data)
+{
+    if (filter->contains(data))
+    {
+        return false;
+    }
+    else {
+        filter->insert(data);
+        return true;
+    }
 }
 
 
@@ -55,41 +70,42 @@ void StartUrl()
         cout << hostname << endl;
     }
 
-//    ThreadPool pool(4);
+    ThreadPool pool(6);
 
-//    // enqueue and store future
-//    for(int i = 0; i < 10; ++i) {
-//        auto result = pool.enqueue([i](string hostname) {
-//            RequestHandle t2;
-//            while(true)
-//            {
-//                std::string temp = DataHandle::GetDataFromAQueue();
-//                if (temp == "")
-//                {
-//                    //break;
-//                }
-//                else
-//                {
-//                    cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
-//                    t2.Connect(print_callback,hostname+temp);
-//                }
-//            }
-//        },hostname);
-//    }
-
-    while(true)
-    {
-        std::string temp = DataHandle::GetDataFromAQueue();
-        if (temp == "")
-        {
-            //break;
-        }
-        else
-        {
-            //cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
-            t2.Connect(print_callback,hostname+temp);
-        }
+    // enqueue and store future
+    for(int i = 0; i < 10; ++i) {
+        auto result = pool.enqueue([i](string hostname) {
+            RequestHandle t;
+            while(true)
+            {
+                std::string temp = DataHandle::GetDataFromAQueue();
+                if (temp == "")
+                {
+                    //break;
+                }
+                else
+                {
+                    cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
+                    t.Connect(print_callback,hostname+temp);
+                }
+            }
+        },hostname);
     }
+
+//    while(true)
+//    {
+//        std::string temp = DataHandle::GetDataFromAQueue();
+//        if (temp == "")
+//        {
+//            //break;
+//        }
+//        else
+//        {
+//            cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
+//            t2.Connect(print_callback,hostname+temp);
+//        }
+//        temp.shrink_to_fit();
+//    }
 }
 
 
@@ -125,7 +141,6 @@ void Downloader()
 
 int main()
 {
-
     //DownLoadHandle::DownLoad("https://img.onvshen.com:85/girl/22370/22370_s.jpg");
 
     std::thread t(StartUrl);
@@ -142,12 +157,13 @@ int main()
                 std::string temp = DataHandle::GetDataFromIMGQueue();
                 if(temp != "")
                 {
-                    cout << "IMG:" << temp << endl;
+                    //cout << "IMG:" << temp << endl;
                     DownLoadHandle::DownLoad(temp);
                 }
                 else{
-                    cout << "IMG:   NULL"   << endl;
+                    //cout << "IMG:   NULL"   << endl;
                 }
+                temp.shrink_to_fit();
             }
         });
     }

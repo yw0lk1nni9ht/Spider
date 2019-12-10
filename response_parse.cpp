@@ -7,6 +7,7 @@
 #include <mycss/selectors/init.h>
 #include <mycss/selectors/serialization.h>
 #include "datahandle.h"
+#include "DataFilter/bloomfilter.h"
 
 //mystatus_t serialization_callback2(const char* data, size_t len, void* ctx);
 //void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection);
@@ -18,7 +19,7 @@ response_parse::response_parse()
 
 }
 
-void response_parse::parse(std::string response,int id)
+void response_parse::parse(std::string response,int id,BloomFilter *_filter)
 {
     if(id == 1)
     {
@@ -43,7 +44,7 @@ void response_parse::parse(std::string response,int id)
     myhtml_collection_t *titles_list = myhtml_get_nodes_by_tag_id(tree, NULL, _tag_id, NULL);
 
     // 遍历元素
-    print_found_result("In First tree" , tree , titles_list);
+    print_found_result("In First tree" , tree , titles_list,_filter);
 
     // 释放资源
     myhtml_collection_destroy(titles_list);
@@ -61,7 +62,7 @@ void response_parse::parse(std::string response,int id)
  * @return 返回说明
  *     -<em>mystatus_t</em> 状态值
  */
-mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx)
+mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,BloomFilter *_filter)
 {
     //转化成字符串
     std::string temp = std::string(data);
@@ -87,16 +88,14 @@ mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx)
         {
             ret = GetTagValue(temp,"src=\"");
         }
-
         DataHandle::AddDataToIMGQueue(ret);
-
         //std::cout << ret << std::endl;
     }
 
     return MyCORE_STATUS_OK;
 }
 
-void response_parse::print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection)
+void response_parse::print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection,BloomFilter *_filter)
 {
     if(collection) {
         for(size_t i = 0; i < collection->length; i++) {
@@ -104,7 +103,7 @@ void response_parse::print_found_result(const char* caption, myhtml_tree_t* html
 
             mycore_string_raw _data = {};
             myhtml_serialization_node(collection->list[i],&_data);
-            ResolveTag(_data.data,_data.length,NULL);
+            ResolveTag(_data.data,_data.length,NULL,_filter);
         }
     }
     else {

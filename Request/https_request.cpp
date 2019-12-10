@@ -219,52 +219,52 @@ bool https_request::MakeConnect(std::string url)
 {
     try
     {
-    host = url;
-    //target = _target;
+        host = url;
+        //target = _target;
 
-    if (!GetSSLFile())
-    {
-        //下载SSL证书失败，或者
-        return false;
-    }
+        if (!GetSSLFile())
+        {
+            //下载SSL证书失败，或者
+            return false;
+        }
 
-    // IO上下文
-    net::io_context ioc;
-    // SSL上下文是必需的，并保存证书
-    ssl::context ctx(ssl::context::sslv23);
+        // IO上下文
+        net::io_context ioc;
+        // SSL上下文是必需的，并保存证书
+        ssl::context ctx(ssl::context::sslv23);
 
-    //加载CA证书
-    std::string targetPem = host;
-    targetPem.append(".pem");
-    ctx.load_verify_file((targetPem));
+        //加载CA证书
+        std::string targetPem = host;
+        targetPem.append(".pem");
+        ctx.load_verify_file((targetPem));
 
-    // 选择验证远程服务器的证书的方式
-    ctx.set_verify_mode(ssl::verify_none);
+        // 选择验证远程服务器的证书的方式
+        ctx.set_verify_mode(ssl::verify_none);
 
-    // TCP分解器
-    tcp::resolver resolver(ioc);
-    //创建TCP流式结构
-    if (stream == NULL)
-    {
-        stream = new beast::ssl_stream<beast::tcp_stream>(ioc,ctx);
-    }
+        // TCP分解器
+        tcp::resolver resolver(ioc);
+        //创建TCP流式结构
+        if (stream == NULL)
+        {
+            stream = new beast::ssl_stream<beast::tcp_stream>(ioc,ctx);
+        }
 
-    // 设置SNI主机名（许多主机需要此项才能成功握手）
-    if(! SSL_set_tlsext_host_name(((beast::ssl_stream<beast::tcp_stream>*)stream)->native_handle(), host.c_str()))
-    {
-        beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
-        throw beast::system_error{ec};
-    }
+        // 设置SNI主机名（许多主机需要此项才能成功握手）
+        if(! SSL_set_tlsext_host_name(((beast::ssl_stream<beast::tcp_stream>*)stream)->native_handle(), host.c_str()))
+        {
+            beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+            throw beast::system_error{ec};
+        }
 
-    // 找到域名
-    auto const results = resolver.resolve(host, port);
-    // 连接
-    beast::get_lowest_layer(*((beast::ssl_stream<beast::tcp_stream>*)stream)).connect(results);
+        // 找到域名
+        auto const results = resolver.resolve(host, port);
+        // 连接
+        beast::get_lowest_layer(*((beast::ssl_stream<beast::tcp_stream>*)stream)).connect(results);
 
-    // 执行SSL握手
-    ((beast::ssl_stream<beast::tcp_stream>*)stream)->handshake(ssl::stream_base::client);
-    IsConnect = true;
-    return true;
+        // 执行SSL握手
+        ((beast::ssl_stream<beast::tcp_stream>*)stream)->handshake(ssl::stream_base::client);
+        IsConnect = true;
+        return true;
     }
     catch(beast::system_error e)
     {

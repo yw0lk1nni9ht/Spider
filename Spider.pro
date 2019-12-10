@@ -4,21 +4,25 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 HEADERS += \
+	DataFilter/bloomfilter.h \
     Request/http_request.h \
     Request/https_request.h \
     Request/request.h \
     Request/requesthandle.h \
-    dataclean.h \
+	DataFilter/dataclean.h \
+	DataFilter/bloomfilter.h \
     datahandle.h \
     response_parse.h \
     downloadhandle.h \
     threadpool.h
 SOURCES += \
+	DataFilter/bloomfilter.cpp \
     Request/http_request.cpp \
     Request/https_request.cpp \
 	Request/request.cpp \
     Request/requesthandle.cpp \
-	dataclean.cpp \
+	DataFilter/dataclean.cpp \
+	DataFilter/bloomfilter.cpp \
 	datahandle.cpp \
         main.cpp \
     response_parse.cpp \

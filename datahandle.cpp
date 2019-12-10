@@ -1,5 +1,5 @@
 #include "datahandle.h"
-
+#include <list>
 DataHandle::DataHandle()
 {
 
@@ -10,20 +10,23 @@ static boost::mutex AQ_pop_mutex;
 
 static boost::mutex IMGQ_push_mutex;
 static boost::mutex IMGQ_pop_mutex;
-static std::queue<std::string> A_QUEUE;
-static std::queue<std::string> IMG_QUEUE;
+std::list<std::string> DataHandle::A_QUEUE;
+std::list<std::string> DataHandle::IMG_QUEUE;
 
 int DataHandle::GetAQueueLength()
 {
     return A_QUEUE.size();
 }
+
 std::string DataHandle::GetDataFromAQueue(){
     std::string ret = "";
     AQ_pop_mutex.lock();
     if(!A_QUEUE.empty())
     {
         ret = A_QUEUE.front();
-        A_QUEUE.pop();
+        //std::cout << ret << std::endl;
+        A_QUEUE.front().shrink_to_fit();
+        A_QUEUE.pop_front();
     }
     AQ_pop_mutex.unlock();
     return ret;
@@ -33,9 +36,10 @@ std::string DataHandle::GetDataFromIMGQueue(){
     std::string ret = "";
     IMGQ_pop_mutex.lock();
     if(!IMG_QUEUE.empty())
-    {        
+    {
         ret = IMG_QUEUE.front();
-        IMG_QUEUE.pop();
+        IMG_QUEUE.front().shrink_to_fit();
+        IMG_QUEUE.pop_front();
     }
     IMGQ_pop_mutex.unlock();
     return ret;
@@ -55,13 +59,13 @@ void DataHandle::AddDataToQueue(std::string data, int id)
     {
         AQ_push_mutex.lock();
         //add to Aqueue
-        A_QUEUE.push(data);
+        A_QUEUE.push_back(data);
         AQ_push_mutex.unlock();
     }
     else if (id == 2){
         IMGQ_push_mutex.lock();
         //add to IMGqueue
-        IMG_QUEUE.push(data);
+        IMG_QUEUE.push_back(data);
         IMGQ_push_mutex.unlock();
     }
 }
