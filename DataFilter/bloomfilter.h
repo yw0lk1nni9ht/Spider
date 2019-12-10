@@ -60,6 +60,7 @@ bool BloomFilter<T>::contains(T value){
 
 template<class T>
 void BloomFilter<T>::insert(T value){
+    std::cout << hashFunction1(value) << std::endl;
     array[hashFunction1(value)] = true;
     array[hashFunction2(value)] = true;
     nElements++;
@@ -72,6 +73,7 @@ unsigned int BloomFilter<T>::hashFunction1(T value){
     for (auto c : value) {
         hash = (hash << 5) + hash + c; /* hash * 33 + c */
     }
+    std::cout << hash % size << std::endl;
     return hash % size;
 }
 

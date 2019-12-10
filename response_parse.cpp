@@ -13,13 +13,15 @@
 //void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection);
 std::string GetTagValue(std::string Tag,const char* _attributeName);
 std::string Tag = "";
+typedef bool (*CallbackFun)(std::string data);
+
 //myhtml_tag_id_t _tag_id = MyHTML_TAG__UNDEF;
 response_parse::response_parse()
 {
 
 }
 
-void response_parse::parse(std::string response,int id,BloomFilter *_filter)
+void response_parse::parse(std::string response,int id,CallbackFun _callback)
 {
     if(id == 1)
     {
@@ -44,7 +46,7 @@ void response_parse::parse(std::string response,int id,BloomFilter *_filter)
     myhtml_collection_t *titles_list = myhtml_get_nodes_by_tag_id(tree, NULL, _tag_id, NULL);
 
     // 遍历元素
-    print_found_result("In First tree" , tree , titles_list,_filter);
+    print_found_result("In First tree" , tree , titles_list,_callback);
 
     // 释放资源
     myhtml_collection_destroy(titles_list);
@@ -62,7 +64,7 @@ void response_parse::parse(std::string response,int id,BloomFilter *_filter)
  * @return 返回说明
  *     -<em>mystatus_t</em> 状态值
  */
-mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,BloomFilter *_filter)
+mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,CallbackFun _callback)
 {
     //转化成字符串
     std::string temp = std::string(data);
@@ -74,7 +76,14 @@ mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,Bl
         std::string ret = GetTagValue(temp,"href=\"");
         if (ret.substr(0,1) == "/")
         {
-            DataHandle::AddDataToAQueue(ret);
+            if(_callback(ret))
+            {
+                DataHandle::AddDataToAQueue(ret);
+            }
+            else
+            {
+                std::cout << "已存在:" << ret << std::endl;
+            }
         }
         //std::cout << ret << std::endl;
     }
@@ -95,7 +104,7 @@ mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,Bl
     return MyCORE_STATUS_OK;
 }
 
-void response_parse::print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection,BloomFilter *_filter)
+void response_parse::print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection,CallbackFun _callback)
 {
     if(collection) {
         for(size_t i = 0; i < collection->length; i++) {
@@ -103,7 +112,7 @@ void response_parse::print_found_result(const char* caption, myhtml_tree_t* html
 
             mycore_string_raw _data = {};
             myhtml_serialization_node(collection->list[i],&_data);
-            ResolveTag(_data.data,_data.length,NULL,_filter);
+            ResolveTag(_data.data,_data.length,NULL,_callback);
         }
     }
     else {

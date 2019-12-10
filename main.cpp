@@ -20,7 +20,9 @@
 using namespace std;
 void StartUrl();
 void Downloader();
-BloomFilter<std::string> filter(100);
+bool cleandata_callback(string data);
+long num_data = 0;
+//BloomFilter<std::string>* filter = NULL;
 
 /**
  * @brief 回调函数，用于获取Request类请求页面后的Body数据,并且解析
@@ -31,22 +33,30 @@ void print_callback(string data){
     response_parse test;
     if (DataHandle::GetAQueueLength() < 2500)
     {
-        test.parse(data,1);
+        test.parse(data,1,cleandata_callback);
     }
-    test.parse(data,2);
+    test.parse(data,2,cleandata_callback);
 }
 
 
-int cleandata_callback(string data)
+bool cleandata_callback(string data)
 {
-    if (filter->contains(data))
-    {
-        return false;
-    }
-    else {
-        filter->insert(data);
-        return true;
-    }
+
+//    std::cout << "出发" << std::endl;
+//    return true;
+//    if (num_data == 0)
+//    {
+//        filter.insert(data);
+//        return true;
+//    }
+//    if (filter.contains(data))
+//    {
+//        return false;
+//    }
+//    else {
+//        filter->insert(data);
+//        return true;
+//    }
 }
 
 
@@ -72,40 +82,40 @@ void StartUrl()
 
     ThreadPool pool(6);
 
-    // enqueue and store future
-    for(int i = 0; i < 10; ++i) {
-        auto result = pool.enqueue([i](string hostname) {
-            RequestHandle t;
-            while(true)
-            {
-                std::string temp = DataHandle::GetDataFromAQueue();
-                if (temp == "")
-                {
-                    //break;
-                }
-                else
-                {
-                    cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
-                    t.Connect(print_callback,hostname+temp);
-                }
-            }
-        },hostname);
-    }
-
-//    while(true)
-//    {
-//        std::string temp = DataHandle::GetDataFromAQueue();
-//        if (temp == "")
-//        {
-//            //break;
-//        }
-//        else
-//        {
-//            cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
-//            t2.Connect(print_callback,hostname+temp);
-//        }
-//        temp.shrink_to_fit();
+//    // enqueue and store future
+//    for(int i = 0; i < 10; ++i) {
+//        auto result = pool.enqueue([i](string hostname) {
+//            RequestHandle t;
+//            while(true)
+//            {
+//                std::string temp = DataHandle::GetDataFromAQueue();
+//                if (temp == "")
+//                {
+//                    //break;
+//                }
+//                else
+//                {
+//                    cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
+//                    t.Connect(print_callback,hostname+temp);
+//                }
+//            }
+//        },hostname);
 //    }
+
+    while(true)
+    {
+        std::string temp = DataHandle::GetDataFromAQueue();
+        if (temp == "")
+        {
+            //break;
+        }
+        else
+        {
+            cout << "A:" << hostname + temp << "\t QueueLen:" << DataHandle::GetAQueueLength() << endl;
+            t2.Connect(print_callback,hostname+temp);
+        }
+        temp.shrink_to_fit();
+    }
 }
 
 
@@ -141,6 +151,12 @@ void Downloader()
 
 int main()
 {
+    BloomFilter<std::string> filter(4);
+    filter.insert("have");
+
+    //filter = new BloomFilter<std::string>(4);
+    filter.insert("abc");
+
     //DownLoadHandle::DownLoad("https://img.onvshen.com:85/girl/22370/22370_s.jpg");
 
     std::thread t(StartUrl);
