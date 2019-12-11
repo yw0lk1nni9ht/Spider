@@ -358,7 +358,7 @@ void https_request::CloseConnect(){
         if (stream != NULL)
         {
             // 关闭连接
-            beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
+            //beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
             beast::error_code ec2;
             ((beast::ssl_stream<beast::tcp_stream>*)stream)->shutdown(ec2);
             if(stream !=NULL)
@@ -380,6 +380,11 @@ void https_request::CloseConnect(){
         IsConnect = false;
     }
     catch (beast::system_error e)
+    {
+        IsConnect = false;
+        std::cerr << "https_Close_Error: " << e.what() << std::endl;
+    }
+    catch (std::exception e)
     {
         IsConnect = false;
         std::cerr << "https_Close_Error: " << e.what() << std::endl;

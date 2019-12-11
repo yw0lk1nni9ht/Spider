@@ -76,13 +76,9 @@ mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,Ca
         std::string ret = GetTagValue(temp,"href=\"");
         if (ret.substr(0,1) == "/")
         {
-            if(_callback(ret))
+            if(!_callback(ret))
             {
                 DataHandle::AddDataToAQueue(ret);
-            }
-            else
-            {
-                std::cout << "已存在:" << ret << std::endl;
             }
         }
         //std::cout << ret << std::endl;
@@ -97,7 +93,10 @@ mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,Ca
         {
             ret = GetTagValue(temp,"src=\"");
         }
-        DataHandle::AddDataToIMGQueue(ret);
+        if(!_callback(ret))
+        {
+            DataHandle::AddDataToIMGQueue(ret);
+        }
         //std::cout << ret << std::endl;
     }
 
@@ -113,6 +112,7 @@ void response_parse::print_found_result(const char* caption, myhtml_tree_t* html
             mycore_string_raw _data = {};
             myhtml_serialization_node(collection->list[i],&_data);
             ResolveTag(_data.data,_data.length,NULL,_callback);
+            mycore_string_raw_destroy(&_data, false);
         }
     }
     else {
