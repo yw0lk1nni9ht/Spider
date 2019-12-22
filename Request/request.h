@@ -10,6 +10,7 @@ public:
     virtual std::string GetRequestTest();
     virtual bool MakeConnect(std::string url);
     virtual int SendRequest(std::string url,std::string _target);
+    virtual int SendRequestWithParam(std::string url,std::string _target,std::string _param);
     virtual void CloseConnect();
     virtual bool GetConnected();
     virtual std::string GetConnectedHost();

@@ -10,12 +10,17 @@ static boost::mutex AQ_pop_mutex;
 
 static boost::mutex IMGQ_push_mutex;
 static boost::mutex IMGQ_pop_mutex;
-std::list<std::string> DataHandle::A_QUEUE;
-std::list<std::string> DataHandle::IMG_QUEUE;
+std::deque<std::string> DataHandle::A_QUEUE;
+std::deque<std::string> DataHandle::IMG_QUEUE;
 
 int DataHandle::GetAQueueLength()
 {
     return A_QUEUE.size();
+}
+
+int DataHandle::GetIMGQueueLength()
+{
+    return IMG_QUEUE.size();
 }
 
 std::string DataHandle::GetDataFromAQueue(){

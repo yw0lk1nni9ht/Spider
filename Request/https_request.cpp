@@ -298,6 +298,10 @@ int https_request::SendRequest(std::string url,std::string _target)
         http::request<http::string_body> req{http::verb::get, target, version};
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        req.set(beast::http::field::content_type, "application/x-www-form-urlencoded");
+        //req.body() = "name=飞儿";
+        req.prepare_payload();
+        //std::cout << req << std::endl;
 
         // 发送HTTP请求到远程主机
         http::write(*(beast::ssl_stream<beast::tcp_stream>*)stream, req);
@@ -321,27 +325,59 @@ int https_request::SendRequest(std::string url,std::string _target)
         {
             _moveurl = std::string((res.at(http::field::location)).data());
         }
+        return (int)res.base().result();
+    }
+    catch (beast::system_error e)
+    {
+        std::cerr << "https_Get_Error: " << e.what() << std::endl;
+        return (int)http::status::unknown;
+    }
+}
 
-//        // 关闭连接
-//        beast::get_lowest_layer(*(beast::ssl_stream<beast::tcp_stream>*)stream).close();
-//        beast::error_code ec2;
-//        ((beast::ssl_stream<beast::tcp_stream>*)stream)->shutdown(ec2);
-//        if(stream !=NULL)
-//        {
-//            delete stream;
-//            stream = NULL;
-//        }
-//        if(ec2 == net::error::eof)
-//        {
-//            // Rationale:
-//            // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-//            ec2 = {};
-//        }
-//        if(ec2)
-//        {
-//            return (int)res.base().result();
-//            throw beast::system_error{ec2};
-//        }
+
+
+int https_request::SendRequestWithParam(std::string url,std::string _target,std::string _param)
+{
+    host = url;
+    //auto const port = "80";
+    target = _target;
+    try
+    {
+        if (stream == NULL)
+        {
+            throw "error:stream is NULL";
+        }
+        // 设置HTTP请求
+        http::request<http::string_body> req{http::verb::get, target, version};
+        req.set(http::field::host, host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        req.set(beast::http::field::content_type, "application/x-www-form-urlencoded");
+        req.body() = _param;
+        req.prepare_payload();
+        //std::cout << req << std::endl;
+
+        // 发送HTTP请求到远程主机
+        http::write(*(beast::ssl_stream<beast::tcp_stream>*)stream, req);
+
+        // 创建buffer用于读取和写入持久化
+        beast::flat_buffer buffer;
+
+        // 声明一个容器用于保存响应
+        http::response<http::string_body> res;
+
+        // 接受HTTP响应
+        http::read(*(beast::ssl_stream<beast::tcp_stream>*)stream, buffer, res);
+
+        // 输出显示
+        //std::cout << res << std::endl;
+        _body = res.body();
+
+        // 如果响应状态为302 301则记录下重定向的url
+        if (((http::response_header<>)res.base()).result() == http::status::moved_permanently ||
+                ((http::response_header<>)res.base()).result() == http::status::found)
+        {
+            _moveurl = std::string((res.at(http::field::location)).data());
+        }
         return (int)res.base().result();
     }
     catch (beast::system_error e)

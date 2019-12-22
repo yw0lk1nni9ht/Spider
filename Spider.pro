@@ -14,7 +14,9 @@ HEADERS += \
     datahandle.h \
     response_parse.h \
     downloadhandle.h \
-    threadpool.h
+    threadpool.h \
+    StartControl/DefaultSearch.h \
+    StartControl/PersonIdSearch.h
 SOURCES += \
 	DataFilter/bloomfilter.cpp \
 	DataFilter/murmurhash3.cpp \
@@ -26,7 +28,9 @@ SOURCES += \
 	datahandle.cpp \
         main.cpp \
     response_parse.cpp \
-    downloadhandle.cpp
+    downloadhandle.cpp \
+    StartControl/DefaultSearch.cpp \
+    StartControl/PersonIdSearch.cpp
 
 INCLUDEPATH += /usr/local/boost/include
 INCLUDEPATH += /usr/local/ssl/openssl/include

@@ -8,6 +8,7 @@
 #include <mycss/selectors/serialization.h>
 #include "datahandle.h"
 #include "DataFilter/bloomfilter.h"
+#include "downloadhandle.h"
 
 //mystatus_t serialization_callback2(const char* data, size_t len, void* ctx);
 //void print_found_result(const char* caption, myhtml_tree_t* html_tree, myhtml_collection_t *collection);
@@ -96,6 +97,7 @@ mystatus_t response_parse::ResolveTag(const char* data, size_t len, void* ctx,Ca
         if(!_callback(ret))
         {
             DataHandle::AddDataToIMGQueue(ret);
+
         }
         //std::cout << ret << std::endl;
     }

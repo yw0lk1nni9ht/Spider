@@ -17,6 +17,10 @@ bool BaseRequest::MakeConnect(std::string url){}
 
 int BaseRequest::SendRequest(std::string url,std::string _target){}
 
+int BaseRequest::SendRequestWithParam(std::string url,std::string _target,std::string _param)
+{
+
+}
 
 
 void BaseRequest::CloseConnect(){}

@@ -14,10 +14,11 @@ public:
     static std::string GetDataFromAQueue();
     static std::string GetDataFromIMGQueue();
     static int GetAQueueLength();
+    static int GetIMGQueueLength();
 private:
     static void AddDataToQueue(std::string data,int id);
-    static std::list<std::string> A_QUEUE;
-    static std::list<std::string> IMG_QUEUE;
+    static std::deque<std::string> A_QUEUE;
+    static std::deque<std::string> IMG_QUEUE;
 };
 
 #endif // DATAHANDLE_H

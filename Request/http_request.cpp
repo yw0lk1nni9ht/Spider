@@ -224,6 +224,62 @@ int http_request::SendRequest(std::string url,std::string _target)
     }
 }
 
+int http_request::SendRequestWithParam(std::string url,std::string _target,std::string _param)
+{
+    if (host != url)
+    {
+        return (int)http::status::unknown;
+    }
+    //auto const port = "80";
+    target = _target;
+    try
+    {
+        if (stream == NULL)
+        {
+            throw "error:stream is NULL";
+        }
+        // 设置HTTP请求
+        http::request<http::string_body> req{http::verb::get, target, version};
+        req.set(http::field::host, host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        req.body() = _param;
+        req.prepare_payload();
+        //std::cout << req << std::endl;
+
+        // 发送HTTP请求到远程主机
+        http::write(*((beast::tcp_stream*)stream), req);
+
+        // 创建buffer用于读取和写入持久化
+        beast::flat_buffer buffer;
+
+        // 声明一个容器用于保存响应
+        http::response<http::string_body> res;
+
+        // 接受HTTP响应并写入
+        http::read(*((beast::tcp_stream*)stream), buffer, res);
+
+        // 输出显示
+        //std::cout << res << std::endl;
+        _body = res.body();
+
+        // 如果响应状态为302 301则记录下重定向的url
+        if (((http::response_header<>)res.base()).result() == http::status::moved_permanently ||
+                ((http::response_header<>)res.base()).result() == http::status::found)
+        {
+            _moveurl = std::string(res.at(http::field::location)).data();
+        }
+
+
+        //return (int)((http::response_header<>)res.base()).result();
+        return (int)res.base().result();
+    }
+    catch (beast::system_error e)
+    {
+        std::cerr << "http_Get_Error: " << e.what() << std::endl;
+        return (int)http::status::unknown;
+    }
+}
+
 
 void http_request::CloseConnect(){
     try{

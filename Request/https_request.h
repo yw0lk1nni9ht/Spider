@@ -12,6 +12,7 @@ public:
     std::string GetRequestTest() override;
     bool MakeConnect(std::string url) override;
     int SendRequest(std::string url,std::string _target) override;
+    int SendRequestWithParam(std::string url,std::string _target,std::string _param) override;
     void CloseConnect() override;
 private:
     bool GetSSLFile();
